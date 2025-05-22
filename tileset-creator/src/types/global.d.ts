@@ -5,6 +5,7 @@ declare global {
     type MapInfo = {
         name: string;
         url: string;
+        type: 'default' | 'custom';
         key?: string;
         creditImageUrl?: string;
         mapIconUrl?: string;

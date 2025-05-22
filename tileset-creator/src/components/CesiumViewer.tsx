@@ -26,6 +26,7 @@ async function createViewer(
         'name': 'Google',
         'url': 'https://tile.googleapis.com/v1/3dtiles/root.json',
         'key': 'AIzaSyAX6sorU_jmEEGIWbbuRN329qEvgseHVl8',
+        'type': 'default',
         'creditImageUrl': 'https://assets.ion.cesium.com/google-credit.png',
         'mapIconUrl': 'https://upload.wikimedia.org/wikipedia/commons/1/13/Googlelogo_color_272x92dp.png',
     }
@@ -38,9 +39,10 @@ async function createViewer(
 type propsType = {
     mapTilesLoaded: MapTilesLoaded;
     setMapTilesLoaded: React.Dispatch<React.SetStateAction<MapTilesLoaded>>;
+    onViewerReady: (viewer: Viewer) => void;
 }
 
-function CesiumViewer({ mapTilesLoaded, setMapTilesLoaded }: propsType) {
+function CesiumViewer({ mapTilesLoaded, setMapTilesLoaded, onViewerReady }: propsType) {
     const viewerRef = useRef<HTMLDivElement>(null);
 
     // Maintain a reference to the mapTilesLoaded state to avoid stale closures.
@@ -52,7 +54,9 @@ function CesiumViewer({ mapTilesLoaded, setMapTilesLoaded }: propsType) {
 
     useEffect(() => {
         if (viewerRef.current) {
-            createViewer(viewerRef.current, mapTilesLoadedRef, setMapTilesLoaded);
+            createViewer(viewerRef.current, mapTilesLoadedRef, setMapTilesLoaded).then((viewer) => {
+                onViewerReady(viewer);
+            });
         }
     }, []);
 
