@@ -1,0 +1,22 @@
+import { Cesium3DTileset } from 'cesium';
+
+declare global {
+    // Type returned by the discoverMaps function
+    type MapInfo = {
+        name: string;
+        url: string;
+        key?: string;
+        creditImageUrl?: string;
+        mapIconUrl?: string;
+    }
+
+    // MapInfo with a new field 'tile' with the type Cesium3DTileSet.
+    type MapInfoWithTile = MapInfo & {
+        tile: Cesium3DTileset;
+    };
+
+    // Dictionary to store the global state of the application
+    type MapTilesLoaded = {
+        [url: string]: MapInfoWithTile;
+    };
+}
