@@ -2,6 +2,7 @@ import { Viewer } from "cesium";
 import { useState } from "react";
 import { Modal, Button, Form, Alert } from "react-bootstrap";
 import { addTilesetFromMapInfo } from "../utils/add-tiles";
+import customMapLogo from "../assets/customMap.svg";
 
 type AddMapModalProps = {
     show: boolean;
@@ -26,7 +27,8 @@ function AddMapModal({ show, onClose, viewer, setMapTilesLoaded }: AddMapModalPr
         const mapInfo: MapInfo = {
             name: mapName,
             url: objectUrl,
-            type: "custom"
+            type: "custom",
+            mapIconUrl: customMapLogo,
         };
 
         addTilesetFromMapInfo(viewer, mapInfo, setMapTilesLoaded);

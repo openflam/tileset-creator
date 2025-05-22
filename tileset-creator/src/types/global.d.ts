@@ -1,4 +1,4 @@
-import { Cesium3DTileset } from 'cesium';
+import { Cesium3DTileset, Model as CesiumModel } from 'cesium';
 
 declare global {
     // Type returned by the discoverMaps function
@@ -13,7 +13,7 @@ declare global {
 
     // MapInfo with a new field 'tile' with the type Cesium3DTileSet.
     type MapInfoWithTile = MapInfo & {
-        tile: Cesium3DTileset;
+        tile: Cesium3DTileset | CesiumModel;
     };
 
     // Dictionary to store the global state of the application

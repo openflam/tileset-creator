@@ -19,7 +19,7 @@ const changeTilesetVisibility = (tileset: Cesium3DTileset, visible: boolean) => 
 interface PropsType {
     mapInfo: MapInfoWithTile;
 }
-function MapInfo({ mapInfo }: PropsType) {
+function MapInfoDefault({ mapInfo }: PropsType) {
     return (
         <Card className="w-100 mb-3">
             <Card.Body>
@@ -42,7 +42,7 @@ function MapInfo({ mapInfo }: PropsType) {
                         type="checkbox"
                         label="Show Map"
                         defaultChecked={true}
-                        onChange={(e) => { changeTilesetVisibility(mapInfo.tile, e.target.checked); }}
+                        onChange={(e) => { changeTilesetVisibility(mapInfo.tile as Cesium3DTileset, e.target.checked); }}
                         className="mb-3"
                     />
 
@@ -54,7 +54,7 @@ function MapInfo({ mapInfo }: PropsType) {
                             step={0.1}
                             defaultValue={1}
                             // onChange={(e) => { changeTilesetOpacity(url, setMapTilesLoaded, parseFloat(e.target.value)); }}
-                            onChange={(e) => { changeTilesetOpacity(mapInfo.tile, parseFloat(e.target.value)); }}
+                            onChange={(e) => { changeTilesetOpacity(mapInfo.tile as Cesium3DTileset, parseFloat(e.target.value)); }}
                         />
                     </Form.Group>
                 </Form>
@@ -64,4 +64,4 @@ function MapInfo({ mapInfo }: PropsType) {
 };
 
 
-export default MapInfo;
+export default MapInfoDefault;

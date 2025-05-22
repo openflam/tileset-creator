@@ -1,10 +1,18 @@
-import { Cesium3DTileset, Resource, Credit, Viewer } from 'cesium';
+import {
+    Cesium3DTileset,
+    Resource,
+    Credit,
+    Viewer,
+    Model as CesiumModel,
+    Transforms as CesiumTransforms,
+    Cartesian3,
+} from 'cesium';
 
 
 async function addTilesetFromMapInfo(viewer: Viewer, mapInfo: MapInfo,
-    setMapTilesLoaded: React.Dispatch<React.SetStateAction<MapTilesLoaded>>): Promise<Cesium3DTileset> {
+    setMapTilesLoaded: React.Dispatch<React.SetStateAction<MapTilesLoaded>>): Promise<Cesium3DTileset | CesiumModel> {
 
-    let tileset = null;
+    let tileset: Cesium3DTileset | CesiumModel;
     if (mapInfo.type === 'default') {
         tileset = await addDefaultMapTiles(viewer, mapInfo);
     }
@@ -51,13 +59,32 @@ async function addDefaultMapTiles(viewer: Viewer, mapInfo: MapInfo): Promise<Ces
     return tileset;
 }
 
-async function addCustomMapTiles(_viewer: Viewer, mapInfo: MapInfo): Promise<Cesium3DTileset> {
-    const { name, url } = mapInfo;
-    console.log(`Adding custom map tiles: ${name} from ${url}`);
+async function addCustomMapTiles(viewer: Viewer, mapInfo: MapInfo): Promise<CesiumModel> {
+    const { url } = mapInfo;
 
-    // return empty tileset
-    const emptyTileset = new Cesium3DTileset({});
-    return emptyTileset;
+    // Get the current camera position and direction
+    const camera = viewer.scene.camera;
+    const cameraPosition = camera.positionWC;
+    const cameraDirection = camera.directionWC;
+
+    // Place the model 10 meters in front of the camera
+    const distance = 10.0;
+    const offset = Cartesian3.multiplyByScalar(cameraDirection, distance, new Cartesian3());
+    const modelPosition = Cartesian3.add(cameraPosition, offset, new Cartesian3());
+
+    const modelMatrix = CesiumTransforms.eastNorthUpToFixedFrame(modelPosition);
+
+    const model = await CesiumModel.fromGltfAsync({
+        url: url,
+        modelMatrix: modelMatrix,
+        scale: 1.0,
+        scene: viewer.scene,
+    });
+
+    viewer.scene.primitives.add(model);
+
+    return model;
 }
+
 
 export { addTilesetFromMapInfo };
