@@ -12,6 +12,7 @@ import {
 async function addTilesetFromMapInfo(viewer: Viewer, mapInfo: MapInfo,
     setMapTilesLoaded: React.Dispatch<React.SetStateAction<MapTilesLoaded>>): Promise<Cesium3DTileset | CesiumModel> {
 
+    // "Default" maps are 3D Tilesets, while "Custom" maps are GLTF models.
     let tileset: Cesium3DTileset | CesiumModel;
     if (mapInfo.type === 'default') {
         tileset = await addDefaultMapTiles(viewer, mapInfo);
@@ -33,8 +34,8 @@ async function addTilesetFromMapInfo(viewer: Viewer, mapInfo: MapInfo,
     return tileset;
 }
 
+// This function adds a default map tileset to the viewer.
 async function addDefaultMapTiles(viewer: Viewer, mapInfo: MapInfo): Promise<Cesium3DTileset> {
-    // The default map tiles is Google 3D tileset. This function adds the google 3D tileset to the viewer.
     const { name, url, key, creditImageUrl } = mapInfo;
     let credits = undefined;
     if (creditImageUrl) {
@@ -59,6 +60,7 @@ async function addDefaultMapTiles(viewer: Viewer, mapInfo: MapInfo): Promise<Ces
     return tileset;
 }
 
+// This function adds a custom map tileset (GLTF model) to the viewer.
 async function addCustomMapTiles(viewer: Viewer, mapInfo: MapInfo): Promise<CesiumModel> {
     const { url } = mapInfo;
 

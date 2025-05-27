@@ -1,9 +1,11 @@
 import { Viewer } from 'cesium';
+import { MapsDiscovery } from '@openflam/dnsspatialdiscovery';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import { useState } from 'react';
 
+import CONFIG from '../config';
 import CesiumViewer from './CesiumViewer';
 import SideBar from './SideBar';
 
@@ -13,6 +15,8 @@ function HomePage() {
     const [mapTilesLoaded, setMapTilesLoaded] = useState<MapTilesLoaded>({});
     const [viewer, setViewer] = useState<Viewer | null>(null);
 
+    const mapsDiscoveryObj = new MapsDiscovery(CONFIG.DISCOVERY_SUFFIX);
+
     return (
         <Container fluid className="p-0 m-0">
             <Row className='g-0'>
@@ -21,6 +25,7 @@ function HomePage() {
                         mapTilesLoaded={mapTilesLoaded}
                         setMapTilesLoaded={setMapTilesLoaded}
                         onViewerReady={(v) => setViewer(v)}
+                        mapsDiscoveryObj={mapsDiscoveryObj}
                     />
                 </Col>
                 <Col xs={3}>
