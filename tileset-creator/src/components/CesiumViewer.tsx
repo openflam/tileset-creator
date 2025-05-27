@@ -1,6 +1,6 @@
 import { Viewer, IonGeocodeProviderType, Camera, Rectangle, Color as CesiumColor } from 'cesium';
 import { useEffect, useRef } from 'react';
-import { addTilesetFromMapInfo } from '../utils/add-tiles';
+import { addTilesetFromMapInfo } from '../utils/cesium/add-tiles';
 
 async function createViewer(
     viewerDiv: HTMLDivElement,

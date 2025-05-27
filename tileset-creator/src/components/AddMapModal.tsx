@@ -1,7 +1,7 @@
 import { Viewer } from "cesium";
 import { useState } from "react";
 import { Modal, Button, Form, Alert } from "react-bootstrap";
-import { addTilesetFromMapInfo } from "../utils/add-tiles";
+import { addTilesetFromMapInfo } from "../utils/cesium/add-tiles";
 import customMapLogo from "../assets/customMap.svg";
 
 type AddMapModalProps = {
