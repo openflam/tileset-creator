@@ -1,4 +1,4 @@
-import { Card, Row, Col, Image, Form } from 'react-bootstrap';
+import { Card, Row, Col, Image, Form, Button } from 'react-bootstrap';
 import { useEffect, useState } from 'react';
 import * as Cesium from 'cesium';
 
@@ -25,6 +25,7 @@ function MapInfoCustom({ mapInfo }: PropsType) {
             scale: 1,
         };
     });
+    const [commandCopied, setCommandCopied] = useState(false);
 
     // Update modelMatrix whenever params change
     useEffect(() => {
@@ -118,6 +119,34 @@ function MapInfoCustom({ mapInfo }: PropsType) {
                         <Col md={12}>{renderControl('Scale', 'scale')}</Col>
                     </Row>
                 </Form>
+
+                <Row className="mt-4">
+                    <Col>
+                        <Button
+                            variant="primary"
+                            type="button"
+                            onClick={() => {
+                                // Create the command string.
+                                // The heading is adjusted by -90 degrees. Not sure why, but it seems to 
+                                // be necessary to align the model correctly.
+                                const command =
+                                    "npx 3d-tiles-tools createTilesetJson " +
+                                    "-i mesh.glb " +
+                                    "-o tileset.json " +
+                                    "--cartographicPositionDegrees " +
+                                    `${params.longitude} ${params.latitude} ${params.altitude} ` +
+                                    "--rotationDegrees " +
+                                    `${params.heading - 90} ${params.pitch} ${params.roll}`;
+                                navigator.clipboard.writeText(command);
+                                setCommandCopied(true);
+                                setTimeout(() => setCommandCopied(false), 2000); // hide after 2 seconds
+                            }}
+                        >
+                            Copy Tileset Command
+                        </Button>
+                        {commandCopied && <small className="text-success ms-3">Copied!</small>}
+                    </Col>
+                </Row>
 
             </Card.Body>
         </Card>
