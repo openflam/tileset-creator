@@ -39,7 +39,6 @@ const getFullUrl = (url: string | undefined, mapName: string): string | undefine
 async function discoverMaps(mapsDiscoveryObj: MapsDiscovery, minLat: number, minLon: number, maxLat: number, maxLon: number): Promise<MapInfo[]> {
 
     const errorCircle = getRadiusForBounds(minLat, minLon, maxLat, maxLon);
-    console.log('errorCircle', errorCircle);
 
     const mapsDiscovered = await mapsDiscoveryObj.discoverMapServers(
         errorCircle.center.lat,
@@ -74,8 +73,6 @@ async function discoverMaps(mapsDiscoveryObj: MapsDiscovery, minLat: number, min
         'mapIconUrl': 'https://upload.wikimedia.org/wikipedia/commons/1/13/Googlelogo_color_272x92dp.png',
     }
     mapInfos.push(defaultMapInfo);
-
-    console.log('discovered maps:', mapInfos);
 
     return mapInfos;
 }

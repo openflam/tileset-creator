@@ -17,7 +17,6 @@ function AddMapModal({ show, onClose, viewer, setMapTilesLoaded }: AddMapModalPr
 
     const handleSubmit = () => {
         if (!file) {
-            console.log("No file selected.");
             onClose();
             return;
         }

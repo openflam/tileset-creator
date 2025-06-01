@@ -17,7 +17,6 @@ function discoverAndAddTiles(viewer: Viewer,
         for (const mapInfo of mapInfos) {
             const { url } = mapInfo;
             if (mapTilesLoadedRef.current && url in mapTilesLoadedRef.current) {
-                console.log('Tileset already loaded:', url);
                 continue;
             }
             addTilesetFromMapInfo(viewer, mapInfo, setMapTilesLoaded);
