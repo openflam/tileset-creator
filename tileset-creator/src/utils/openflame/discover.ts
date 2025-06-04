@@ -1,18 +1,7 @@
 import { MapsDiscovery, MapServer } from "@openflam/dnsspatialdiscovery";
+import { LocationToGeoDomain } from "@openflam/dnsspatialdiscovery";
 import type { MapServerServiceDescription } from "@openflam/dnsspatialdiscovery";
-
-// Given a bounding box, returns the center and radius of the largest circle that fits within the box
-const getRadiusForBounds = (minLat: number, minLon: number,
-    maxLat: number, maxLon: number): { center: { lat: number, lon: number }, radius: number } => {
-    const center = {
-        lat: (minLat + maxLat) / 2,
-        lon: (minLon + maxLon) / 2
-    };
-
-    // TODO: Calculate the radius.
-    const radius = 20;
-    return { center: center, radius: radius };
-};
+import type { Geometry } from "@openflam/dnsspatialdiscovery";
 
 const getTileSetService = (mapServer: MapServer): MapServerServiceDescription | null => {
     if (!mapServer.capabilities || !mapServer.capabilities.services) {
@@ -38,13 +27,31 @@ const getFullUrl = (url: string | undefined, mapName: string): string | undefine
 
 async function discoverMaps(mapsDiscoveryObj: MapsDiscovery, minLat: number, minLon: number, maxLat: number, maxLon: number): Promise<MapInfo[]> {
 
-    const errorCircle = getRadiusForBounds(minLat, minLon, maxLat, maxLon);
+    const polygonGeometry: Geometry = {
+        type: 'Polygon',
+        coordinates: [[
+            [minLon, minLat],
+            [maxLon, minLat],
+            [maxLon, maxLat],
+            [minLon, maxLat],
+            [minLon, minLat]
+        ]]
+    }
 
-    const mapsDiscovered = await mapsDiscoveryObj.discoverMapServers(
-        errorCircle.center.lat,
-        errorCircle.center.lon,
-        errorCircle.radius,
-    );
+    const mapsDiscovered = await mapsDiscoveryObj.discoverMapServers(polygonGeometry);
+    const geodomainsGenerated = await LocationToGeoDomain.getBaseGeoDomains(polygonGeometry);
+
+    // Temporary logging for debugging
+    console.log('Discovered maps:', mapsDiscovered);
+    let geodomains: string[] = [];
+    for (const domain of geodomainsGenerated) {
+        geodomains.push(domain.join('.'));
+    }
+    console.log('Geo domains generated:');
+    console.log(geodomains.join('\n'));
+
+    console.log('Polygon geometry:', polygonGeometry);
+    // -- End of temporary logging
 
     let mapInfos: MapInfo[] = [];
     for (const mapName in mapsDiscovered) {
