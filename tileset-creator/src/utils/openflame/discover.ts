@@ -1,7 +1,9 @@
 import { MapsDiscovery, MapServer } from "@openflam/dnsspatialdiscovery";
+import { LocationToGeoDomain } from "@openflam/dnsspatialdiscovery";
 import type { MapServerServiceDescription } from "@openflam/dnsspatialdiscovery";
 import { Viewer } from "cesium";
 import { getPolygonFromViewer } from "../cesium/camera-view";
+import { consoleLog } from "../log";
 
 const getTileSetService = (mapServer: MapServer): MapServerServiceDescription | null => {
     if (!mapServer.capabilities || !mapServer.capabilities.services) {
@@ -47,6 +49,17 @@ async function discoverMaps(viewer: Viewer, mapsDiscoveryObj: MapsDiscovery): Pr
     }
 
     const mapsDiscovered = await mapsDiscoveryObj.discoverMapServers(polygonGeometry);
+
+    if (import.meta.env.MODE === 'development') {
+        consoleLog('Polygon geometry:');
+        consoleLog(polygonGeometry);
+        consoleLog('Maps discovered:');
+        consoleLog(mapsDiscovered);
+
+        const geoDomainsGenerated = await LocationToGeoDomain.getBaseGeoDomains(polygonGeometry);
+        consoleLog('Base geodomains generated:');
+        consoleLog(geoDomainsGenerated.map(domain => domain.join('.')).join('\n'));
+    }
 
     for (const mapName in mapsDiscovered) {
         const map = mapsDiscovered[mapName];
