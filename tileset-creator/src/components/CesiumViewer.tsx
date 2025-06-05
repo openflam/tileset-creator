@@ -2,13 +2,12 @@ import {
     Viewer,
     IonGeocodeProviderType,
     Camera, Rectangle,
-    Color as CesiumColor,
-    Math as CesiumMath
+    Color as CesiumColor
 } from 'cesium';
 import { MapsDiscovery } from '@openflam/dnsspatialdiscovery';
 import { useEffect, useRef } from 'react';
 
-import { discoverAndAddTiles } from '../utils/discover-add-tiles';
+import { discoverAndAddTiles, addDefaultTiles } from '../utils/discover-add-tiles';
 
 async function createViewer(
     viewerDiv: HTMLDivElement,
@@ -24,37 +23,24 @@ async function createViewer(
         baseLayerPicker: false,
         geocoder: IonGeocodeProviderType.GOOGLE,
     });
+
+    // Remove all the existing imagery layers and data sources.
     viewer.scene.imageryLayers.removeAll();
     viewer.dataSources.removeAll();
 
-    // Make the globe white so that the translucent tiles are visible.
+    // Make the globe black so that the translucent tiles are visible.
     viewer.scene.globe.baseColor = CesiumColor.fromCssColorString('#000000');
 
     // Add a callback to discover new maps when the camera moves.
     const discoverTilesForCurrentView = () => {
-        const viewRectangle = viewer.camera.computeViewRectangle();
-        if (!viewRectangle) {
-            return;
-        }
-        else {
-            const west = CesiumMath.toDegrees(viewRectangle.west);
-            const south = CesiumMath.toDegrees(viewRectangle.south);
-            const east = CesiumMath.toDegrees(viewRectangle.east);
-            const north = CesiumMath.toDegrees(viewRectangle.north);
-            const minLat = Math.min(south, north);
-            const minLon = Math.min(west, east);
-            const maxLat = Math.max(south, north);
-            const maxLon = Math.max(west, east);
-            discoverAndAddTiles(
-                viewer, mapsDiscoveryObj,
-                minLat, minLon, maxLat, maxLon,
-                mapTilesLoadedRef, setMapTilesLoaded
-            );
-        }
+        discoverAndAddTiles(
+            viewer, mapsDiscoveryObj,
+            mapTilesLoadedRef, setMapTilesLoaded
+        );
     }
 
-    // Call the function initially to discover and add tiles in the initial view.
-    discoverTilesForCurrentView();
+    // Add default tiles in the initial view.
+    addDefaultTiles(viewer, setMapTilesLoaded);
 
     // Callback to disocver and add tiles when the camera moves.
     // This callback is called when the camera stops moving.
