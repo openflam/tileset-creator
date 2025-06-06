@@ -9,8 +9,8 @@
     "build:prod": "tsc -b && vite build --mode production",
     "lint": "eslint .",
     "preview": "vite preview",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "predeploy": "npm run build:prod",
+    "deploy": "gh-pages -d dist --cname map.open-flame.com"
   },
   "dependencies": {
     "@openflam/dnsspatialdiscovery": "^4.2.0",
