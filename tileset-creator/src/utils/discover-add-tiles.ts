@@ -2,6 +2,7 @@ import { MapsDiscovery } from "@openflam/dnsspatialdiscovery";
 import { Viewer } from "cesium";
 import { discoverMaps } from "./openflame/discover";
 import { addTilesetFromMapInfo } from "./cesium/add-tiles";
+import CONFIG from "../config";
 
 function discoverAndAddTiles(
     viewer: Viewer,
@@ -25,14 +26,7 @@ function discoverAndAddTiles(
 
 function addDefaultTiles(viewer: Viewer, setMapTilesLoaded: React.Dispatch<React.SetStateAction<MapTilesLoaded>>) {
     // Add Google photorealistic tileset as a default map.
-    const defaultMapInfo: MapInfo = {
-        'name': 'Google',
-        'url': 'https://tile.googleapis.com/v1/3dtiles/root.json',
-        'key': 'AIzaSyAX6sorU_jmEEGIWbbuRN329qEvgseHVl8',
-        'type': 'default',
-        'creditImageUrl': 'https://assets.ion.cesium.com/google-credit.png',
-        'mapIconUrl': 'https://upload.wikimedia.org/wikipedia/commons/1/13/Googlelogo_color_272x92dp.png',
-    }
+    const defaultMapInfo: MapInfo = CONFIG.GOOGLE_3D_TILES;
     addTilesetFromMapInfo(viewer, defaultMapInfo, setMapTilesLoaded);
 }
 
