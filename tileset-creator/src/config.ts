@@ -8,7 +8,7 @@ const CONFIG: ConfigType = {
     GOOGLE_3D_TILES: {
         'name': 'Google',
         'url': 'https://tile.googleapis.com/v1/3dtiles/root.json',
-        'key': 'AIzaSyBGtpZD6LiktvMqlE2Xbk2Vh5ZHEZ5GfLg', // Restricted key
+        'key': import.meta.env.VITE_GOOGLE_API_KEY as string,
         'type': 'default',
         'creditImageUrl': 'https://assets.ion.cesium.com/google-credit.png',
         'mapIconUrl': 'https://upload.wikimedia.org/wikipedia/commons/1/13/Googlelogo_color_272x92dp.png',
