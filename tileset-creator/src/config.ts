@@ -1,6 +1,7 @@
 type ConfigType = {
     DISCOVERY_SUFFIX: string;
     GOOGLE_3D_TILES: MapInfo;
+    CESIUM_ION_TOKEN: string;
 };
 
 const CONFIG: ConfigType = {
@@ -12,7 +13,8 @@ const CONFIG: ConfigType = {
         'type': 'default',
         'creditImageUrl': 'https://assets.ion.cesium.com/google-credit.png',
         'mapIconUrl': 'https://upload.wikimedia.org/wikipedia/commons/1/13/Googlelogo_color_272x92dp.png',
-    }
+    },
+    CESIUM_ION_TOKEN: import.meta.env.VITE_CESIUM_ION_TOKEN as string,
 };
 
 export default CONFIG;

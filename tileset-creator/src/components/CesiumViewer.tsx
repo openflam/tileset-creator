@@ -2,12 +2,14 @@ import {
     Viewer,
     IonGeocodeProviderType,
     Camera, Rectangle,
-    Color as CesiumColor
+    Color as CesiumColor,
+    Ion
 } from 'cesium';
 import { MapsDiscovery } from '@openflam/dnsspatialdiscovery';
 import { useEffect, useRef } from 'react';
 
 import { discoverAndAddTiles, addDefaultTiles } from '../utils/discover-add-tiles';
+import CONFIG from '../config';
 
 async function createViewer(
     viewerDiv: HTMLDivElement,
@@ -18,6 +20,8 @@ async function createViewer(
     var extent = Rectangle.fromDegrees(-79.9474941502019, 40.44094655168858, -79.93932358868162, 40.445570804400056);
     Camera.DEFAULT_VIEW_RECTANGLE = extent;
     Camera.DEFAULT_VIEW_FACTOR = 0;
+
+    Ion.defaultAccessToken = CONFIG.CESIUM_ION_TOKEN;
 
     const viewer = new Viewer(viewerDiv, {
         baseLayerPicker: false,
