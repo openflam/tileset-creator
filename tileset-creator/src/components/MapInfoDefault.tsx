@@ -46,8 +46,8 @@ function MapInfoDefault({ mapInfo }: PropsType) {
                         className="mb-3"
                     />
 
-                    <Form.Group controlId="transparencySlider">
-                        <Form.Label>Transparency</Form.Label>
+                    <Form.Group>
+                        <Form.Label>Opacity</Form.Label>
                         <Form.Range
                             min={0}
                             max={1}
