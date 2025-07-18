@@ -1,6 +1,6 @@
 import {
     Viewer,
-    IonGeocodeProviderType,
+    // IonGeocodeProviderType,
     Camera, Rectangle,
     Color as CesiumColor,
     Ion
@@ -9,6 +9,8 @@ import { MapsDiscovery } from '@openflam/dnsspatialdiscovery';
 import { useEffect, useRef } from 'react';
 
 import { discoverAndAddTiles, addDefaultTiles } from '../utils/discover-add-tiles';
+import NominatimGeocoderService from '../utils/cesium/NominatimGeocoderService';
+import { customDestinationFound } from '../utils/cesium/customDestinationFound';
 import CONFIG from '../config';
 
 async function createViewer(
@@ -25,8 +27,14 @@ async function createViewer(
 
     const viewer = new Viewer(viewerDiv, {
         baseLayerPicker: false,
-        geocoder: IonGeocodeProviderType.GOOGLE,
+        geocoder: new (NominatimGeocoderService as any)(),
     });
+
+    // Override the default destinationFound function to use altitude from our geocoder
+    if (viewer.geocoder && viewer.geocoder.viewModel) {
+        // Override with our custom function
+        viewer.geocoder.viewModel.destinationFound = customDestinationFound;
+    }
 
     // Remove all the existing imagery layers and data sources.
     viewer.scene.imageryLayers.removeAll();
