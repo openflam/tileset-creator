@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button, Form } from "react-bootstrap";
 import MapInfoDefault from "./MapInfoDefault";
 import MapInfoCustom from "./MapInfoCustom";
-import AddMapModal from "./AddMapModal";
+import AddGLBModal from "./AddGLBModal";
 
 type propsType = {
     mapTilesLoaded: MapTilesLoaded;
@@ -12,7 +12,7 @@ type propsType = {
 };
 
 function SideBar({ mapTilesLoaded, setMapTilesLoaded, viewer }: propsType) {
-    const [showDialog, setShowDialog] = useState(false);
+    const [showAddGLBModal, setShowAddGLBModal] = useState(false);
     const [editEnabled, setEditEnabled] = useState(false);
 
     return (
@@ -41,15 +41,15 @@ function SideBar({ mapTilesLoaded, setMapTilesLoaded, viewer }: propsType) {
                 <Button
                     variant="primary"
                     className="w-100 mt-3"
-                    onClick={() => setShowDialog(true)}
+                    onClick={() => setShowAddGLBModal(true)}
                 >
-                    Add New Map
+                    Add GLB
                 </Button>
             }
 
-            <AddMapModal
-                show={showDialog}
-                onClose={() => setShowDialog(false)}
+            <AddGLBModal
+                show={showAddGLBModal}
+                onClose={() => setShowAddGLBModal(false)}
                 viewer={viewer}
                 setMapTilesLoaded={setMapTilesLoaded}
             />

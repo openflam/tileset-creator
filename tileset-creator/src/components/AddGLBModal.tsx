@@ -4,14 +4,14 @@ import { Modal, Button, Form, Alert } from "react-bootstrap";
 import { addTilesetFromMapInfo } from "../utils/cesium/add-tiles";
 import customMapLogo from "../assets/customMap.svg";
 
-type AddMapModalProps = {
+type AddGLBModalProps = {
     show: boolean;
     onClose: () => void;
     viewer: Viewer;
     setMapTilesLoaded: React.Dispatch<React.SetStateAction<MapTilesLoaded>>;
 };
 
-function AddMapModal({ show, onClose, viewer, setMapTilesLoaded }: AddMapModalProps) {
+function AddGLBModal({ show, onClose, viewer, setMapTilesLoaded }: AddGLBModalProps) {
     const [mapName, setMapName] = useState("");
     const [file, setFile] = useState<File | null>(null);
 
@@ -74,4 +74,4 @@ function AddMapModal({ show, onClose, viewer, setMapTilesLoaded }: AddMapModalPr
     );
 }
 
-export default AddMapModal;
+export default AddGLBModal;
