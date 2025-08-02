@@ -74,4 +74,4 @@ async function discoverMaps(viewer: Viewer, mapsDiscoveryObj: MapsDiscovery): Pr
     return mapInfos;
 }
 
-export { discoverMaps };
+export { discoverMaps, getTileSetService, getFullUrl };

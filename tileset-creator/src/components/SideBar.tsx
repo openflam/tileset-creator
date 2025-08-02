@@ -4,6 +4,7 @@ import { Button, Form } from "react-bootstrap";
 import MapInfoDefault from "./MapInfoDefault";
 import MapInfoCustom from "./MapInfoCustom";
 import AddGLBModal from "./AddGLBModal";
+import AddMapServerModal from "./AddMapServerModal";
 
 type propsType = {
     mapTilesLoaded: MapTilesLoaded;
@@ -13,6 +14,7 @@ type propsType = {
 
 function SideBar({ mapTilesLoaded, setMapTilesLoaded, viewer }: propsType) {
     const [showAddGLBModal, setShowAddGLBModal] = useState(false);
+    const [showAddMapServerModal, setShowAddMapServerModal] = useState(false);
     const [editEnabled, setEditEnabled] = useState(false);
 
     return (
@@ -38,6 +40,7 @@ function SideBar({ mapTilesLoaded, setMapTilesLoaded, viewer }: propsType) {
                     ))}
             </>
             {editEnabled &&
+                <>
                 <Button
                     variant="primary"
                     className="w-100 mt-3"
@@ -45,11 +48,27 @@ function SideBar({ mapTilesLoaded, setMapTilesLoaded, viewer }: propsType) {
                 >
                     Add GLB
                 </Button>
+
+                <Button
+                    variant="primary"
+                    className="w-100 mt-3"
+                    onClick={() => setShowAddMapServerModal(true)}
+                >
+                    Add Map Server
+                </Button>
+                </>
             }
 
             <AddGLBModal
                 show={showAddGLBModal}
                 onClose={() => setShowAddGLBModal(false)}
+                viewer={viewer}
+                setMapTilesLoaded={setMapTilesLoaded}
+            />
+
+            <AddMapServerModal
+                show={showAddMapServerModal}
+                onClose={() => setShowAddMapServerModal(false)}
                 viewer={viewer}
                 setMapTilesLoaded={setMapTilesLoaded}
             />
