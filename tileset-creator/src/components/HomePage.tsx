@@ -14,6 +14,7 @@ function HomePage() {
     // The mapTilesLoaded state is used to keep track of the loaded map tiles.
     const [mapTilesLoaded, setMapTilesLoaded] = useState<MapTilesLoaded>({});
     const [viewer, setViewer] = useState<Viewer | null>(null);
+    const [discoverEnabled, setDiscoverEnabled] = useState(true);
 
     const mapsDiscoveryObj = new MapsDiscovery(CONFIG.DISCOVERY_SUFFIX);
 
@@ -26,6 +27,7 @@ function HomePage() {
                         setMapTilesLoaded={setMapTilesLoaded}
                         onViewerReady={(v) => setViewer(v)}
                         mapsDiscoveryObj={mapsDiscoveryObj}
+                        discoverEnabled={discoverEnabled}
                     />
                 </Col>
                 <Col xs={3}>
@@ -34,6 +36,8 @@ function HomePage() {
                             mapTilesLoaded={mapTilesLoaded}
                             setMapTilesLoaded={setMapTilesLoaded}
                             viewer={viewer}
+                            discoverEnabled={discoverEnabled}
+                            setDiscoverEnabled={setDiscoverEnabled}
                         />
                     )}
                 </Col>

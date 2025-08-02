@@ -15,7 +15,8 @@ async function createViewer(
     viewerDiv: HTMLDivElement,
     mapsDiscoveryObj: MapsDiscovery,
     mapTilesLoadedRef: React.RefObject<MapTilesLoaded>,
-    setMapTilesLoaded: React.Dispatch<React.SetStateAction<MapTilesLoaded>>) {
+    setMapTilesLoaded: React.Dispatch<React.SetStateAction<MapTilesLoaded>>,
+    discoverEnabledRef: React.RefObject<boolean>) {
 
     var extent = Rectangle.fromDegrees(-79.9474941502019, 40.44094655168858, -79.93932358868162, 40.445570804400056);
     Camera.DEFAULT_VIEW_RECTANGLE = extent;
@@ -37,6 +38,9 @@ async function createViewer(
 
     // Add a callback to discover new maps when the camera moves.
     const discoverTilesForCurrentView = () => {
+        if (discoverEnabledRef.current === false) {
+            return;
+        }
         discoverAndAddTiles(
             viewer, mapsDiscoveryObj,
             mapTilesLoadedRef, setMapTilesLoaded
@@ -63,9 +67,10 @@ type propsType = {
     setMapTilesLoaded: React.Dispatch<React.SetStateAction<MapTilesLoaded>>;
     onViewerReady: (viewer: Viewer) => void;
     mapsDiscoveryObj: MapsDiscovery;
+    discoverEnabled: boolean;
 }
 
-function CesiumViewer({ mapTilesLoaded, setMapTilesLoaded, onViewerReady, mapsDiscoveryObj }: propsType) {
+function CesiumViewer({ mapTilesLoaded, setMapTilesLoaded, onViewerReady, mapsDiscoveryObj, discoverEnabled }: propsType) {
     const viewerRef = useRef<HTMLDivElement>(null);
 
     // Maintain a reference to the mapTilesLoaded state to avoid stale closures.
@@ -75,10 +80,16 @@ function CesiumViewer({ mapTilesLoaded, setMapTilesLoaded, onViewerReady, mapsDi
         mapTilesLoadedRef.current = mapTilesLoaded;
     }, [mapTilesLoaded]);
 
+    // Similarly, maintain a reference to the discoverEnabled state.
+    const discoverEnabledRef = useRef<boolean>(discoverEnabled);
+    useEffect(() => {
+        discoverEnabledRef.current = discoverEnabled;
+    }, [discoverEnabled]);
+
     useEffect(() => {
         if (viewerRef.current) {
             createViewer(viewerRef.current, mapsDiscoveryObj,
-                mapTilesLoadedRef, setMapTilesLoaded).then((viewer) => {
+                mapTilesLoadedRef, setMapTilesLoaded, discoverEnabledRef).then((viewer) => {
                     onViewerReady(viewer);
                 });
         }
