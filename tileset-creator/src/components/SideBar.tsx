@@ -10,22 +10,32 @@ type propsType = {
     mapTilesLoaded: MapTilesLoaded;
     setMapTilesLoaded: React.Dispatch<React.SetStateAction<MapTilesLoaded>>;
     viewer: Viewer;
+    discoverEnabled: boolean;
+    setDiscoverEnabled: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-function SideBar({ mapTilesLoaded, setMapTilesLoaded, viewer }: propsType) {
+function SideBar({ mapTilesLoaded, setMapTilesLoaded, viewer, discoverEnabled, setDiscoverEnabled }: propsType) {
     const [showAddGLBModal, setShowAddGLBModal] = useState(false);
     const [showAddMapServerModal, setShowAddMapServerModal] = useState(false);
     const [editEnabled, setEditEnabled] = useState(false);
 
     return (
         <div className="p-3" style={{ overflowY: "scroll", height: "100vh" }}>
-            <Form.Check
-                className="mb-3"
-                type="switch"
-                checked={editEnabled}
-                label="Edit Mode"
-                onClick={() => setEditEnabled(!editEnabled)}
-            ></Form.Check>
+            <div className="d-flex align-items-center mb-3">
+                <Form.Check
+                    type="switch"
+                    checked={discoverEnabled}
+                    label="Discover"
+                    className="me-3"
+                    onClick={() => setDiscoverEnabled(!discoverEnabled)}
+                />
+                <Form.Check
+                    type="switch"
+                    checked={editEnabled}
+                    label="Edit Mode"
+                    onClick={() => setEditEnabled(!editEnabled)}
+                />
+            </div>
             <>
                 {Object.entries(mapTilesLoaded)
                     .filter(([_, mapInfo]) => mapInfo.type === 'default')
