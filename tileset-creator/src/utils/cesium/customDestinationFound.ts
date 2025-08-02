@@ -1,4 +1,4 @@
-import { Rectangle, Cartesian3, Math as CesiumMath, Matrix4 } from 'cesium';
+import { Rectangle, Cartesian3, Math as CesiumMath, Matrix4, Viewer } from 'cesium';
 
 /**
  * Custom destinationFound function that handles altitude from geocoder results.
@@ -62,5 +62,56 @@ export function customDestinationFound(viewModel: any, destination: any): void {
         },
         duration: viewModel._flightDuration,
         endTransform: Matrix4.IDENTITY,
+    });
+}
+
+/**
+ * New function to handle combined search results from our custom search service.
+ * This function works with the SearchResult interface from CombinedSearchService.
+ * 
+ * @param result - The search result from CombinedSearchService
+ * @param viewer - The Cesium viewer instance
+ */
+export function flyToSearchResult(result: any, viewer: Viewer): void {
+    console.log('🚁 [flyToSearchResult] Flying to:', result.displayName);
+    
+    const camera = viewer.camera;
+    let finalDestination = result.destination;
+    const altitude = result.altitude || 1000; // Use result altitude or default
+
+    if (result.destination instanceof Rectangle) {
+        // Check if rectangle is very small (like a point)
+        const isSmallRectangle = Math.abs(result.destination.south - result.destination.north) < 0.0001 && 
+                               Math.abs(result.destination.east - result.destination.west) < 0.0001;
+        
+        if (isSmallRectangle) {
+            // Convert to center point with our altitude
+            const center = Rectangle.center(result.destination);
+            finalDestination = Cartesian3.fromDegrees(
+                CesiumMath.toDegrees(center.longitude),
+                CesiumMath.toDegrees(center.latitude),
+                altitude
+            );
+        } else {
+            // For larger rectangles, use the center with our altitude
+            const rectangleCenter = Rectangle.center(result.destination);
+            finalDestination = Cartesian3.fromDegrees(
+                CesiumMath.toDegrees(rectangleCenter.longitude),
+                CesiumMath.toDegrees(rectangleCenter.latitude),
+                altitude
+            );
+        }
+    }
+
+    // Fly to the destination
+    camera.flyTo({
+        destination: finalDestination,
+        duration: 2.0, // 2 seconds flight duration
+        complete: function () {
+            console.log('🚁 [flyToSearchResult] Flight completed to:', result.displayName);
+        },
+        cancel: function () {
+            console.log('🚁 [flyToSearchResult] Flight cancelled');
+        },
     });
 } 

@@ -6,11 +6,10 @@ import {
     Ion
 } from 'cesium';
 import { MapsDiscovery } from '@openflam/dnsspatialdiscovery';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { discoverAndAddTiles, addDefaultTiles } from '../utils/discover-add-tiles';
-import NominatimGeocoderService from '../utils/cesium/NominatimGeocoderService';
-import { customDestinationFound } from '../utils/cesium/customDestinationFound';
+import CustomSearchBar from './CustomSearchBar';
 import CONFIG from '../config';
 
 async function createViewer(
@@ -27,14 +26,14 @@ async function createViewer(
 
     const viewer = new Viewer(viewerDiv, {
         baseLayerPicker: false,
-        geocoder: new (NominatimGeocoderService as any)(),
+        geocoder: false, // Disable the default geocoder
+        homeButton: false, // Optionally disable other widgets to clean up the UI
+        sceneModePicker: false,
+        navigationHelpButton: false,
+        animation: false,
+        timeline: false,
+        fullscreenButton: false,
     });
-
-    // Override the default destinationFound function to use altitude from our geocoder
-    if (viewer.geocoder && viewer.geocoder.viewModel) {
-        // Override with our custom function
-        viewer.geocoder.viewModel.destinationFound = customDestinationFound;
-    }
 
     // Remove all the existing imagery layers and data sources.
     viewer.scene.imageryLayers.removeAll();
@@ -62,7 +61,6 @@ async function createViewer(
 
     viewer.camera.moveEnd.addEventListener(onCameraMoveEnd);
 
-
     return viewer;
 }
 
@@ -75,6 +73,7 @@ type propsType = {
 
 function CesiumViewer({ mapTilesLoaded, setMapTilesLoaded, onViewerReady, mapsDiscoveryObj }: propsType) {
     const viewerRef = useRef<HTMLDivElement>(null);
+    const [viewer, setViewer] = useState<Viewer | null>(null);
 
     // Maintain a reference to the mapTilesLoaded state to avoid stale closures.
     // That is, using just mapTilesLoaded in a callback registered in useEffect will cause using the stale value of mapTilesLoaded.
@@ -86,13 +85,19 @@ function CesiumViewer({ mapTilesLoaded, setMapTilesLoaded, onViewerReady, mapsDi
     useEffect(() => {
         if (viewerRef.current) {
             createViewer(viewerRef.current, mapsDiscoveryObj,
-                mapTilesLoadedRef, setMapTilesLoaded).then((viewer) => {
-                    onViewerReady(viewer);
+                mapTilesLoadedRef, setMapTilesLoaded).then((createdViewer) => {
+                    setViewer(createdViewer);
+                    onViewerReady(createdViewer);
                 });
         }
     }, []);
 
-    return <div ref={viewerRef} style={{ width: '100%', height: '100vh' }} />;
+    return (
+        <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
+            <div ref={viewerRef} style={{ width: '100%', height: '100%' }} />
+            <CustomSearchBar viewer={viewer} />
+        </div>
+    );
 }
 
 export default CesiumViewer;
