@@ -31,6 +31,7 @@ function AddMapServerModal({ show, onClose, viewer, setMapTilesLoaded }: AddMapS
                 key: tileService.key,
                 creditImageUrl: getFullUrl(tileService.creditImageUrl || mapServer.capabilities.iconURL, mapServerURL),
                 mapIconUrl: getFullUrl(mapServer.capabilities.iconURL, mapServerURL),
+                credentialsCookiesRequired: true,
             };
             addTilesetFromMapInfo(viewer, mapInfo, setMapTilesLoaded);
         });

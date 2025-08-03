@@ -6,9 +6,15 @@ declare global {
         name: string;
         url: string;
         type: 'default' | 'custom';
-        key?: string;
         creditImageUrl?: string;
         mapIconUrl?: string;
+        // Map authentication can be handled with a key or by logging in to the map server
+        // separately so that the browser has session cookies.
+        // If the map has a key, it is set in key field (e.g., Google Maps).
+        // If not, the request to the map server will use the session cookies. In such cases, credentialsCookiesRequired is true
+        // and all requests to the map server will include credentials (cookies).
+        key?: string;
+        credentialsCookiesRequired?: boolean;
     }
 
     // MapInfo with a new field 'tile' with the type Cesium3DTileSet.

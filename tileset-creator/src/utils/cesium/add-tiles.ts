@@ -6,7 +6,9 @@ import {
     Model as CesiumModel,
     Transforms as CesiumTransforms,
     Cartesian3,
+    TrustedServers,
 } from 'cesium';
+import { consoleLog } from '../log';
 
 
 async function addTilesetFromMapInfo(viewer: Viewer, mapInfo: MapInfo,
@@ -36,7 +38,7 @@ async function addTilesetFromMapInfo(viewer: Viewer, mapInfo: MapInfo,
 
 // This function adds a default map tileset to the viewer.
 async function addDefaultMapTiles(viewer: Viewer, mapInfo: MapInfo): Promise<Cesium3DTileset> {
-    const { name, url, key, creditImageUrl } = mapInfo;
+    const { name, url, key, creditImageUrl, credentialsCookiesRequired } = mapInfo;
     let credits = undefined;
     if (creditImageUrl) {
         const creditObj = new Credit(
@@ -47,11 +49,26 @@ async function addDefaultMapTiles(viewer: Viewer, mapInfo: MapInfo): Promise<Ces
         );
         credits = [creditObj];
     }
+
+    // If the map has a key, it is added to the query parameters.
+    // If credentialsCookiesRequired is true, the request to the map server will use the session cookies.
+
+    if (credentialsCookiesRequired) {
+        // Add the host to the TrustedServers list to make all requests to this host
+        // with credentials (cookies).
+        const host = new URL(url).host;
+        TrustedServers.add(host, 443);
+        consoleLog(`Added ${host} to TrustedServers for credentials (cookies) access.`);
+    }
+
+    const queryParameters: { [key: string]: string } = {};
+    if (key) {
+        queryParameters.key = key;
+    }
+
     const resource = new Resource({
         url: url,
-        queryParameters: {
-            key: key,
-        },
+        queryParameters: queryParameters,
         credits: credits,
     } as any);
 
