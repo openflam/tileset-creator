@@ -37,10 +37,16 @@ npm run build:prod
 
 ### See map
 
-The static webpage files are written to the `dist/` directory. Run any HTTP server to see the generated site. For example:
+The static webpage files are written to the `dist/` directory. Run any HTTP/HTTPS server to see the generated site. For example:
 
 ```
 python3 -m http.server 
+```
+
+HTTPS is required for interaction with map servers that only respond to requests from secure origins. You can run a HTTPS server using:
+```
+openssl req -new -x509 -keyout key.pem -out cert.pem -days 365 -nodes
+http-server -S -C cert.pem -K key.pem
 ```
 
 ### Deploy
