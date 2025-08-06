@@ -19,7 +19,7 @@ function getScreenRectangle(
     const height = canvas.height;
 
     // Default fractions to leave out if not provided
-    const defaultFrac = 0.1; // 40% by default
+    const defaultFrac = 0.4; // 40% by default
     let { topFrac, bottomFrac, leftFrac, rightFrac } = fracsToLeave;
     topFrac = topFrac ?? defaultFrac;
     bottomFrac = bottomFrac ?? defaultFrac;

@@ -5,6 +5,7 @@ import { Viewer } from "cesium";
 import { getPolygonFromViewer } from "../cesium/camera-view";
 import { consoleLog } from "../log";
 import CONFIG from "../../config";
+import customMapLogo from "../../assets/customMap.svg";
 
 const getTileSetService = async (mapServer: MapServer): Promise<MapServerServiceDescription | null> => {
     if (Object.keys(mapServer.capabilities).length === 0) {
@@ -50,7 +51,7 @@ async function mapServersToMapInfos(mapsDiscovered: { [key: string]: MapServer }
                 type: 'default', // All discovered maps are default maps.
                 key: tileService.key,
                 creditImageUrl: getFullUrl(tileService.creditImageUrl || map.capabilities.iconURL, mapName),
-                mapIconUrl: getFullUrl(map.capabilities.iconURL, mapName),
+                mapIconUrl: getFullUrl(map.capabilities.iconURL, mapName) || customMapLogo,
                 credentialsCookiesRequired: tileService.credentialsCookiesRequired || false,
             };
             mapInfos.push(mapInfo);
