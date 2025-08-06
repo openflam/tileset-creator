@@ -51,6 +51,7 @@ async function mapServersToMapInfos(mapsDiscovered: { [key: string]: MapServer }
                 key: tileService.key,
                 creditImageUrl: getFullUrl(tileService.creditImageUrl || map.capabilities.iconURL, mapName),
                 mapIconUrl: getFullUrl(map.capabilities.iconURL, mapName),
+                credentialsCookiesRequired: tileService.credentialsCookiesRequired || false,
             };
             mapInfos.push(mapInfo);
         }
