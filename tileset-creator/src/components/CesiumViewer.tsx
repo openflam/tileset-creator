@@ -5,7 +5,7 @@ import {
     Color as CesiumColor,
     Ion
 } from 'cesium';
-import { MapsDiscovery } from '@openflam/dnsspatialdiscovery';
+import { MapsDiscovery, MapServer } from '@openflam/dnsspatialdiscovery';
 import { useEffect, useRef } from 'react';
 
 import { discoverAndAddTiles, addDefaultTiles } from '../utils/discover-add-tiles';
@@ -16,7 +16,9 @@ async function createViewer(
     mapsDiscoveryObj: MapsDiscovery,
     mapTilesLoadedRef: React.RefObject<MapTilesLoaded>,
     setMapTilesLoaded: React.Dispatch<React.SetStateAction<MapTilesLoaded>>,
-    discoverEnabledRef: React.RefObject<boolean>) {
+    discoverEnabledRef: React.RefObject<boolean>,
+    mapServersWithDiscoveryRef: React.RefObject<MapServer[]>,
+): Promise<Viewer> {
 
     var extent = Rectangle.fromDegrees(-79.9474941502019, 40.44094655168858, -79.93932358868162, 40.445570804400056);
     Camera.DEFAULT_VIEW_RECTANGLE = extent;
@@ -43,7 +45,7 @@ async function createViewer(
         }
         discoverAndAddTiles(
             viewer, mapsDiscoveryObj,
-            mapTilesLoadedRef, setMapTilesLoaded
+            mapTilesLoadedRef, setMapTilesLoaded, mapServersWithDiscoveryRef,
         );
     }
 
@@ -68,9 +70,10 @@ type propsType = {
     onViewerReady: (viewer: Viewer) => void;
     mapsDiscoveryObj: MapsDiscovery;
     discoverEnabled: boolean;
+    mapServersWithDiscoveryRef: React.RefObject<MapServer[]>;
 }
 
-function CesiumViewer({ mapTilesLoaded, setMapTilesLoaded, onViewerReady, mapsDiscoveryObj, discoverEnabled }: propsType) {
+function CesiumViewer({ mapTilesLoaded, setMapTilesLoaded, onViewerReady, mapsDiscoveryObj, discoverEnabled, mapServersWithDiscoveryRef }: propsType) {
     const viewerRef = useRef<HTMLDivElement>(null);
 
     // Maintain a reference to the mapTilesLoaded state to avoid stale closures.
@@ -89,7 +92,7 @@ function CesiumViewer({ mapTilesLoaded, setMapTilesLoaded, onViewerReady, mapsDi
     useEffect(() => {
         if (viewerRef.current) {
             createViewer(viewerRef.current, mapsDiscoveryObj,
-                mapTilesLoadedRef, setMapTilesLoaded, discoverEnabledRef).then((viewer) => {
+                mapTilesLoadedRef, setMapTilesLoaded, discoverEnabledRef, mapServersWithDiscoveryRef).then((viewer) => {
                     onViewerReady(viewer);
                 });
         }

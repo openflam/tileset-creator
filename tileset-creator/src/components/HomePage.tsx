@@ -1,9 +1,9 @@
 import { Viewer } from 'cesium';
-import { MapsDiscovery } from '@openflam/dnsspatialdiscovery';
+import { MapsDiscovery, MapServer } from '@openflam/dnsspatialdiscovery';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import CONFIG from '../config';
 import CesiumViewer from './CesiumViewer';
@@ -17,6 +17,11 @@ function HomePage() {
     const [discoverEnabled, setDiscoverEnabled] = useState(true);
 
     const mapsDiscoveryObj = new MapsDiscovery(CONFIG.DISCOVERY_SUFFIX);
+    
+    // Stores manually added map servers with discovery service.
+    const mapServersWithDiscovery: MapServer[] = [];
+    const mapServersWithDiscoveryRef = useRef<MapServer[]>(mapServersWithDiscovery);
+
 
     return (
         <Container fluid className="p-0 m-0">
@@ -28,6 +33,7 @@ function HomePage() {
                         onViewerReady={(v) => setViewer(v)}
                         mapsDiscoveryObj={mapsDiscoveryObj}
                         discoverEnabled={discoverEnabled}
+                        mapServersWithDiscoveryRef={mapServersWithDiscoveryRef}
                     />
                 </Col>
                 <Col xs={3}>
@@ -38,6 +44,7 @@ function HomePage() {
                             viewer={viewer}
                             discoverEnabled={discoverEnabled}
                             setDiscoverEnabled={setDiscoverEnabled}
+                            mapServersWithDiscoveryRef={mapServersWithDiscoveryRef}
                         />
                     )}
                 </Col>

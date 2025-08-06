@@ -13,7 +13,7 @@
     "deploy": "gh-pages -d dist --cname map.open-flame.com"
   },
   "dependencies": {
-    "@openflam/dnsspatialdiscovery": "^4.3.3",
+    "@openflam/dnsspatialdiscovery": "^4.4.1",
     "bootstrap": "^5.3.6",
     "react": "^19.1.0",
     "react-bootstrap": "^2.10.10",

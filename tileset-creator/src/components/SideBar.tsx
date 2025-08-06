@@ -5,6 +5,7 @@ import MapInfoDefault from "./MapInfoDefault";
 import MapInfoCustom from "./MapInfoCustom";
 import AddGLBModal from "./AddGLBModal";
 import AddMapServerModal from "./AddMapServerModal";
+import type { MapServer } from "@openflam/dnsspatialdiscovery/dist/src/core/map-server";
 
 type propsType = {
     mapTilesLoaded: MapTilesLoaded;
@@ -12,9 +13,10 @@ type propsType = {
     viewer: Viewer;
     discoverEnabled: boolean;
     setDiscoverEnabled: React.Dispatch<React.SetStateAction<boolean>>;
+    mapServersWithDiscoveryRef: React.RefObject<MapServer[]>;
 };
 
-function SideBar({ mapTilesLoaded, setMapTilesLoaded, viewer, discoverEnabled, setDiscoverEnabled }: propsType) {
+function SideBar({ mapTilesLoaded, setMapTilesLoaded, viewer, discoverEnabled, setDiscoverEnabled, mapServersWithDiscoveryRef }: propsType) {
     const [showAddGLBModal, setShowAddGLBModal] = useState(false);
     const [showAddMapServerModal, setShowAddMapServerModal] = useState(false);
     const [editEnabled, setEditEnabled] = useState(false);
@@ -81,6 +83,7 @@ function SideBar({ mapTilesLoaded, setMapTilesLoaded, viewer, discoverEnabled, s
                 onClose={() => setShowAddMapServerModal(false)}
                 viewer={viewer}
                 setMapTilesLoaded={setMapTilesLoaded}
+                mapServersWithDiscoveryRef={mapServersWithDiscoveryRef}
             />
         </div>
     );

@@ -1,4 +1,4 @@
-import { MapsDiscovery, MapServer } from "@openflam/dnsspatialdiscovery";
+import { MapsDiscovery, MapServer, Services as OpenFLAMEServices } from "@openflam/dnsspatialdiscovery";
 import { LocationToGeoDomain } from "@openflam/dnsspatialdiscovery";
 import type { MapServerServiceDescription } from "@openflam/dnsspatialdiscovery";
 import { Viewer } from "cesium";
@@ -6,7 +6,10 @@ import { getPolygonFromViewer } from "../cesium/camera-view";
 import { consoleLog } from "../log";
 import CONFIG from "../../config";
 
-const getTileSetService = (mapServer: MapServer): MapServerServiceDescription | null => {
+const getTileSetService = async (mapServer: MapServer): Promise<MapServerServiceDescription | null> => {
+    if (Object.keys(mapServer.capabilities).length === 0) {
+        await mapServer.queryCapabilities();
+    }
     if (!mapServer.capabilities || !mapServer.capabilities.services) {
         return null;
     }
@@ -28,8 +31,35 @@ const getFullUrl = (url: string | undefined, mapName: string): string | undefine
     return url;
 };
 
-async function discoverMaps(viewer: Viewer, mapsDiscoveryObj: MapsDiscovery): Promise<MapInfo[]> {
+async function mapServersToMapInfos(mapsDiscovered: { [key: string]: MapServer }): Promise<MapInfo[]> {
+    let mapInfos: MapInfo[] = [];
 
+    const mapNames = Object.keys(mapsDiscovered);
+    const tileServicePromises = mapNames.map(mapName => getTileSetService(mapsDiscovered[mapName]));
+
+    const tileServices = await Promise.all(tileServicePromises);
+
+    for (let i = 0; i < mapNames.length; i++) {
+        const mapName = mapNames[i];
+        const map = mapsDiscovered[mapName];
+        const tileService = tileServices[i];
+        if (tileService) {
+            const mapInfo: MapInfo = {
+                name: map.capabilities.commonName!,
+                url: getFullUrl(tileService.url, mapName)!,
+                type: 'default', // All discovered maps are default maps.
+                key: tileService.key,
+                creditImageUrl: getFullUrl(tileService.creditImageUrl || map.capabilities.iconURL, mapName),
+                mapIconUrl: getFullUrl(map.capabilities.iconURL, mapName),
+            };
+            mapInfos.push(mapInfo);
+        }
+    }
+
+    return mapInfos;
+}
+
+async function discoverMapsDNS(viewer: Viewer, mapsDiscoveryObj: MapsDiscovery): Promise<MapInfo[]> {
     let mapInfos: MapInfo[] = [];
 
     // Add Google photorealistic tileset as a default map.
@@ -55,23 +85,36 @@ async function discoverMaps(viewer: Viewer, mapsDiscoveryObj: MapsDiscovery): Pr
         consoleLog(geoDomainsGenerated.map(domain => domain.join('.')).join('\n'));
     }
 
-    for (const mapName in mapsDiscovered) {
-        const map = mapsDiscovered[mapName];
-        const tileService = getTileSetService(map);
-        if (tileService) {
-            const mapInfo: MapInfo = {
-                name: map.capabilities.commonName!,
-                url: getFullUrl(tileService.url, mapName)!,
-                type: 'default', // All disocvered maps are default maps.
-                key: tileService.key,
-                creditImageUrl: getFullUrl(tileService.creditImageUrl || map.capabilities.iconURL, mapName),
-                mapIconUrl: getFullUrl(map.capabilities.iconURL, mapName),
-            };
-            mapInfos.push(mapInfo);
-        }
-    }
-
+    mapInfos = await mapServersToMapInfos(mapsDiscovered);
     return mapInfos;
 }
 
-export { discoverMaps, getTileSetService, getFullUrl };
+async function discoverMapsServices(viewer: Viewer, customDiscoveryServices: MapServer[]): Promise<MapInfo[]> {
+    let mapInfos: MapInfo[] = [];
+    let allDiscoveredMapServers: { [key: string]: MapServer } = {};
+
+    // Discover maps from the custom discovery services.
+    for (const mapServer of customDiscoveryServices) {
+        const polygonGeometry = getPolygonFromViewer(viewer);
+
+        // Remove the last coordinate from the polygon geometry.
+        // This is because the implmentation of the discovery service expects exactly 4 coordinates.
+        if (!polygonGeometry || polygonGeometry?.type !== 'Polygon') {
+            // For typescript strict mode, we need to ensure polygonGeometry is polygon type.
+            return mapInfos;
+        }
+        polygonGeometry.coordinates[0].pop(); // Remove the last coordinate.
+        
+        const discoveredMapServers = await OpenFLAMEServices.queryDiscoveryService(mapServer, polygonGeometry);
+
+        consoleLog(`Discovered map servers from ${mapServer.name}:`);
+        consoleLog(discoveredMapServers);
+
+        allDiscoveredMapServers = { ...allDiscoveredMapServers, ...discoveredMapServers };
+    }
+
+    mapInfos = await mapServersToMapInfos(allDiscoveredMapServers);
+    return mapInfos;
+}
+
+export { discoverMapsDNS, discoverMapsServices, getTileSetService, getFullUrl };
