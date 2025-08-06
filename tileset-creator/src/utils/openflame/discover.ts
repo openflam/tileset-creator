@@ -96,14 +96,9 @@ async function discoverMapsServices(viewer: Viewer, customDiscoveryServices: Map
     // Discover maps from the custom discovery services.
     for (const mapServer of customDiscoveryServices) {
         const polygonGeometry = getPolygonFromViewer(viewer);
-
-        // Remove the last coordinate from the polygon geometry.
-        // This is because the implmentation of the discovery service expects exactly 4 coordinates.
-        if (!polygonGeometry || polygonGeometry?.type !== 'Polygon') {
-            // For typescript strict mode, we need to ensure polygonGeometry is polygon type.
+        if (!polygonGeometry) {
             return mapInfos;
         }
-        polygonGeometry.coordinates[0].pop(); // Remove the last coordinate.
         
         const discoveredMapServers = await OpenFLAMEServices.queryDiscoveryService(mapServer, polygonGeometry);
 
