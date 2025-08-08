@@ -8,8 +8,6 @@ const CREDIT_HTML = `<a href="https://nominatim.openstreetmap.org/" target="_bla
  * This service follows Cesium's GeocoderService interface.
  */
 function NominatimGeocoderService(this: any) {
-  console.log('🌍 [NominatimGeocoderService] Initializing OpenStreetMap geocoder service...');
-  
   this._resource = new Resource({
     url: API_URL,
     queryParameters: {
@@ -26,7 +24,6 @@ function NominatimGeocoderService(this: any) {
   this._credit = new Credit(CREDIT_HTML, true);
   this._lastResults = []; // Store last results to access altitude data
   
-  console.log('🌍 [NominatimGeocoderService] Service ready! Using OpenStreetMap Nominatim API');
 }
 
 Object.defineProperties(NominatimGeocoderService.prototype, {
@@ -45,10 +42,7 @@ Object.defineProperties(NominatimGeocoderService.prototype, {
  * @returns {Promise<GeocoderService.Result[]>}
  */
 NominatimGeocoderService.prototype.geocode = async function (query: string) {
-  console.log('🌍 [NominatimGeocoderService] Searching for:', query);
-  
   if (!query || query.trim().length === 0) {
-    console.log('🌍 [NominatimGeocoderService] Empty query, skipping search');
     return [];
   }
 
@@ -60,11 +54,9 @@ NominatimGeocoderService.prototype.geocode = async function (query: string) {
   });
 
   try {
-    console.log('🌍 [NominatimGeocoderService] Making request to OpenStreetMap Nominatim API...');
     const response = await resource.fetchJson();
 
     if (!Array.isArray(response) || response.length === 0) {
-      console.log('🌍 [NominatimGeocoderService] No results found for:', query);
       return [];
     }
     
@@ -91,12 +83,9 @@ NominatimGeocoderService.prototype.geocode = async function (query: string) {
     // Store the results for later access (for altitude data)
     this._lastResults = results;
     
-    console.log(`🌍 [NominatimGeocoderService] Found ${results.length} results for "${query}"`);
-    console.log('🌍 [NominatimGeocoderService] Results:', results.map(r => r.displayName));
-    
     return results;
   } catch (error) {
-    console.error('🌍 [NominatimGeocoderService] Geocoding error:', error);
+    console.error('Nominatim geocoding error:', error);
     return [];
   }
 };

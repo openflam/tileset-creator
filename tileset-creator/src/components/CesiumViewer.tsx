@@ -83,13 +83,38 @@ function CesiumViewer({ mapTilesLoaded, setMapTilesLoaded, onViewerReady, mapsDi
     }, [mapTilesLoaded]);
 
     useEffect(() => {
+        let isCleaningUp = false;
+        let createdViewer: Viewer | null = null;
+
         if (viewerRef.current) {
-            createViewer(viewerRef.current, mapsDiscoveryObj,
-                mapTilesLoadedRef, setMapTilesLoaded).then((createdViewer) => {
-                    setViewer(createdViewer);
-                    onViewerReady(createdViewer);
-                });
+            createViewer(
+                viewerRef.current,
+                mapsDiscoveryObj,
+                mapTilesLoadedRef,
+                setMapTilesLoaded,
+            ).then((v) => {
+                if (isCleaningUp) {
+                    // If unmounted before viewer was ready, destroy immediately
+                    try {
+                        v.destroy();
+                    } catch (_) {}
+                    return;
+                }
+                createdViewer = v;
+                setViewer(v);
+                onViewerReady(v);
+            });
         }
+
+        return () => {
+            isCleaningUp = true;
+            if (createdViewer) {
+                try {
+                    createdViewer.destroy();
+                } catch (_) {}
+                createdViewer = null;
+            }
+        };
     }, []);
 
     return (

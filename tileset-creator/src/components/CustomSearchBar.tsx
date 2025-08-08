@@ -32,10 +32,8 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({ viewer }) => {
     useEffect(() => {
         if (isResultSelected) {
             // If a result was just selected, don't search
-            console.log('🎯 [CustomSearchBar] Result selected, not searching');
             return;
         }
-        console.log('🎯 [CustomSearchBar] Searching');
         const timeoutId = setTimeout(() => {
             if (query.trim().length > 2) {
                 performSearch(query);
@@ -83,10 +81,7 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({ viewer }) => {
             const stats = combinedSearchService.current.getSearchStats(searchResults);
             setSearchStats(stats);
         } catch (error) {
-            if (error instanceof Error && error.name === 'AbortError') {
-                console.log('🎯 [CustomSearchBar] Search was cancelled');
-                return;
-            }
+            if (error instanceof Error && error.name === 'AbortError') return;
             console.error('Search error:', error);
             setResults([]);
             setSearchStats({ total: 0, nominatim: 0, google: 0 });
@@ -96,12 +91,9 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({ viewer }) => {
     };
 
     const handleResultSelect = (result: SearchResult) => {
-        console.log('🎯 [CustomSearchBar] Selected result:', result.displayName);
-        
         // Cancel any ongoing search immediately
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
-            console.log('🎯 [CustomSearchBar] Cancelled ongoing search');
         }
         
         // Mark that a result was selected to prevent further searching
@@ -119,16 +111,21 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({ viewer }) => {
 
         // Fly to the selected location
         if (viewer) {
-            console.log('🚁 [CustomSearchBar] Flying to location:', result.displayName);
-            flyToSearchResult(result, viewer);
+            try {
+                // Cancel any ongoing camera flight before starting a new one
+                if (typeof (viewer.camera as any).cancelFlight === 'function') {
+                    (viewer.camera as any).cancelFlight();
+                }
+                flyToSearchResult(result, viewer);
+            } catch (err) {
+                console.error('Failed to fly to location:', err);
+            }
         } else {
-            console.error('🎯 [CustomSearchBar] Viewer is not available');
+            console.error('Viewer is not available');
         }
 
-        // Reset the selection flag after a short delay to allow for future searches
-        setTimeout(() => {
-            setIsResultSelected(false);
-        }, 100);
+        // Do not immediately reset the selection flag here.
+        // We only reset it when the user starts typing again.
     };
 
     const handleClear = () => {
@@ -144,12 +141,9 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({ viewer }) => {
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newQuery = e.target.value;
+        // User is typing again; allow searches to resume
+        setIsResultSelected(false);
         setQuery(newQuery);
-        
-        // If user is typing (not selecting a result), reset the selection flag
-        if (!isResultSelected) {
-            // This will trigger the search effect
-        }
     };
 
     const handleSubmit = (e: React.FormEvent) => {

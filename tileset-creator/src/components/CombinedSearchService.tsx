@@ -43,7 +43,7 @@ export class CombinedSearchService {
             this.googleService = new (GoogleGeocoderService as any)();
         }
 
-        console.log('🔍 [CombinedSearchService] Initialized with options:', this.options);
+        // Initialized
     }
 
     /**
@@ -53,8 +53,6 @@ export class CombinedSearchService {
         if (!query || query.trim().length === 0) {
             return [];
         }
-
-        console.log('🔍 [CombinedSearchService] Searching for:', query);
 
         const searchPromises: Promise<SearchResult[]>[] = [];
 
@@ -75,11 +73,11 @@ export class CombinedSearchService {
             // Combine results from all sources
             let combinedResults: SearchResult[] = [];
 
-            results.forEach((result, index) => {
+            results.forEach((result) => {
                 if (result.status === 'fulfilled') {
                     combinedResults = combinedResults.concat(result.value);
                 } else {
-                    console.error(`🔍 [CombinedSearchService] Search failed for source ${index}:`, result.reason);
+                    console.error('Search failed for a source:', result.reason);
                 }
             });
 
@@ -91,11 +89,10 @@ export class CombinedSearchService {
             // Sort results by relevance (you can implement custom sorting logic here)
             combinedResults = this.sortResults(combinedResults);
 
-            console.log(`🔍 [CombinedSearchService] Combined ${combinedResults.length} results from all sources`);
             return combinedResults;
 
         } catch (error) {
-            console.error('🔍 [CombinedSearchService] Combined search error:', error);
+            console.error('Combined search error:', error);
             return [];
         }
     }
@@ -120,7 +117,7 @@ export class CombinedSearchService {
                 sourceName: 'OpenStreetMap',
             }));
         } catch (error) {
-            console.error('🔍 [CombinedSearchService] Nominatim search error:', error);
+            console.error('Nominatim search error:', error);
             return [];
         }
     }
@@ -146,7 +143,7 @@ export class CombinedSearchService {
                 googleData: result.googleData || {},
             }));
         } catch (error) {
-            console.error('🔍 [CombinedSearchService] Google search error:', error);
+            console.error('Google search error:', error);
             return [];
         }
     }
@@ -193,7 +190,6 @@ export class CombinedSearchService {
             google: results.filter(r => r.source === 'google').length,
         };
 
-        console.log('🔍 [CombinedSearchService] Search stats:', stats);
         return stats;
     }
 

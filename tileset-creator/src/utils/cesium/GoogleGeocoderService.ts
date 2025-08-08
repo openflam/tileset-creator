@@ -9,8 +9,6 @@ const CREDIT_HTML = `<a href="https://developers.google.com/maps" target="_blank
  * This service follows Cesium's GeocoderService interface.
  */
 function GoogleGeocoderService(this: any) {
-  console.log('🗺️ [GoogleGeocoderService] Initializing Google Maps geocoder service...');
-  
   this._resource = new Resource({
     url: API_URL,
     queryParameters: {
@@ -22,7 +20,6 @@ function GoogleGeocoderService(this: any) {
   this._credit = new Credit(CREDIT_HTML, true);
   this._lastResults = []; // Store last results to access altitude data
   
-  console.log('🗺️ [GoogleGeocoderService] Service ready! Using Google Maps Geocoding API');
 }
 
 Object.defineProperties(GoogleGeocoderService.prototype, {
@@ -41,10 +38,7 @@ Object.defineProperties(GoogleGeocoderService.prototype, {
  * @returns {Promise<GeocoderService.Result[]>}
  */
 GoogleGeocoderService.prototype.geocode = async function (query: string) {
-  console.log('🗺️ [GoogleGeocoderService] Searching for:', query);
-  
   if (!query || query.trim().length === 0) {
-    console.log('🗺️ [GoogleGeocoderService] Empty query, skipping search');
     return [];
   }
 
@@ -56,11 +50,9 @@ GoogleGeocoderService.prototype.geocode = async function (query: string) {
   });
 
   try {
-    console.log('🗺️ [GoogleGeocoderService] Making request to Google Maps Geocoding API...');
     const response = await resource.fetchJson();
 
     if (response.status !== 'OK' || !response.results || response.results.length === 0) {
-      console.log('🗺️ [GoogleGeocoderService] No results found for:', query);
       return [];
     }
     
@@ -113,12 +105,9 @@ GoogleGeocoderService.prototype.geocode = async function (query: string) {
     // Store the results for later access (for altitude data)
     this._lastResults = results;
     
-    console.log(`🗺️ [GoogleGeocoderService] Found ${results.length} results for "${query}"`);
-    console.log('🗺️ [GoogleGeocoderService] Results:', results.map((r: any) => r.displayName));
-    
     return results;
   } catch (error) {
-    console.error('🗺️ [GoogleGeocoderService] Geocoding error:', error);
+    console.error('Google geocoding error:', error);
     return [];
   }
 };

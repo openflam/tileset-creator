@@ -73,8 +73,17 @@ export function customDestinationFound(viewModel: any, destination: any): void {
  * @param viewer - The Cesium viewer instance
  */
 export function flyToSearchResult(result: any, viewer: Viewer): void {
-    console.log('🚁 [flyToSearchResult] Flying to:', result.displayName);
-    
+    // Guard against using destroyed viewer/scene
+    if (!viewer || (typeof (viewer as any).isDestroyed === 'function' && (viewer as any).isDestroyed())) {
+        // Viewer unavailable
+        return;
+    }
+
+    const scene: any = (viewer as any).scene;
+    if (!scene || (typeof scene.isDestroyed === 'function' && scene.isDestroyed())) {
+        return;
+    }
+
     const camera = viewer.camera;
     let finalDestination = result.destination;
     const altitude = result.altitude || 1000; // Use result altitude or default
@@ -104,14 +113,12 @@ export function flyToSearchResult(result: any, viewer: Viewer): void {
     }
 
     // Fly to the destination
-    camera.flyTo({
-        destination: finalDestination,
-        duration: 2.0, // 2 seconds flight duration
-        complete: function () {
-            console.log('🚁 [flyToSearchResult] Flight completed to:', result.displayName);
-        },
-        cancel: function () {
-            console.log('🚁 [flyToSearchResult] Flight cancelled');
-        },
-    });
+    try {
+        camera.flyTo({
+            destination: finalDestination,
+            duration: 2.0,
+        });
+    } catch (error) {
+        console.error('Camera flyTo error:', error);
+    }
 } 
