@@ -24,13 +24,10 @@ async function addTilesetFromMapInfo(
   }
 
   // Update the mapTilesLoaded state
-  const mapInfoWithTile: MapInfoWithTile = {
-    ...mapInfo,
-    tile: tileset,
-  };
+  mapInfo.tile = tileset;
   setMapTilesLoaded((prev) => ({
     ...prev,
-    [mapInfo.url]: mapInfoWithTile,
+    [mapInfo.url]: mapInfo,
   }));
 
   return tileset;

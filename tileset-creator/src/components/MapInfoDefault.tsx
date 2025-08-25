@@ -20,7 +20,7 @@ const changeTilesetVisibility = (
 
 // Define the type for the props
 interface PropsType {
-  mapInfo: MapInfoWithTile;
+  mapInfo: MapInfo;
 }
 function MapInfoDefault({ mapInfo }: PropsType) {
   return (

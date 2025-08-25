@@ -47,13 +47,13 @@ function SideBar({
       </div>
       <>
         {Object.entries(mapTilesLoaded)
-          .filter(([_, mapInfo]) => mapInfo.type === "default")
+          .filter(([_, mapInfo]) => mapInfo.tile && mapInfo.type === "default")
           .map(([url, mapInfo]) => (
             <MapInfoDefault key={url} mapInfo={mapInfo} />
           ))}
 
         {Object.entries(mapTilesLoaded)
-          .filter(([_, mapInfo]) => mapInfo.type === "custom")
+          .filter(([_, mapInfo]) => mapInfo.tile && mapInfo.type === "custom")
           .map(([url, mapInfo]) => (
             <MapInfoCustom key={url} mapInfo={mapInfo} />
           ))}

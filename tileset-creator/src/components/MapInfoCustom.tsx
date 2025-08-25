@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import * as Cesium from "cesium";
 
 interface PropsType {
-  mapInfo: MapInfoWithTile;
+  mapInfo: MapInfo;
 }
 
 function MapInfoCustom({ mapInfo }: PropsType) {

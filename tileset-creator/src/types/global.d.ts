@@ -8,6 +8,10 @@ declare global {
     type: "default" | "custom";
     creditImageUrl?: string;
     mapIconUrl?: string;
+
+    // Tile associated with the map
+    tile?: Cesium3DTileset | CesiumModel;
+
     // Map authentication can be handled with a key or by logging in to the map server
     // separately so that the browser has session cookies.
     // If the map has a key, it is set in key field (e.g., Google Maps).
@@ -17,13 +21,8 @@ declare global {
     credentialsCookiesRequired?: boolean;
   };
 
-  // MapInfo with a new field 'tile' with the type Cesium3DTileSet.
-  type MapInfoWithTile = MapInfo & {
-    tile: Cesium3DTileset | CesiumModel;
-  };
-
   // Dictionary to store the global state of the application
   type MapTilesLoaded = {
-    [url: string]: MapInfoWithTile;
+    [url: string]: MapInfo;
   };
 }
