@@ -6,7 +6,7 @@ import {
   Color as CesiumColor,
   Ion,
 } from "cesium";
-import { MapsDiscovery, MapServer } from "@openflam/dnsspatialdiscovery";
+import { MapsDiscovery } from "@openflam/dnsspatialdiscovery";
 import { useEffect, useRef } from "react";
 
 import {
@@ -21,7 +21,6 @@ async function createViewer(
   mapTilesLoadedRef: React.RefObject<MapTilesLoaded>,
   setMapTilesLoaded: React.Dispatch<React.SetStateAction<MapTilesLoaded>>,
   discoverEnabledRef: React.RefObject<boolean>,
-  mapServersWithDiscoveryRef: React.RefObject<MapServer[]>,
 ): Promise<Viewer> {
   var extent = Rectangle.fromDegrees(
     -79.9474941502019,
@@ -56,7 +55,6 @@ async function createViewer(
       mapsDiscoveryObj,
       mapTilesLoadedRef,
       setMapTilesLoaded,
-      mapServersWithDiscoveryRef,
     );
   };
 
@@ -80,7 +78,6 @@ type propsType = {
   onViewerReady: (viewer: Viewer) => void;
   mapsDiscoveryObj: MapsDiscovery;
   discoverEnabled: boolean;
-  mapServersWithDiscoveryRef: React.RefObject<MapServer[]>;
 };
 
 function CesiumViewer({
@@ -89,7 +86,6 @@ function CesiumViewer({
   onViewerReady,
   mapsDiscoveryObj,
   discoverEnabled,
-  mapServersWithDiscoveryRef,
 }: propsType) {
   const viewerRef = useRef<HTMLDivElement>(null);
 
@@ -114,7 +110,6 @@ function CesiumViewer({
         mapTilesLoadedRef,
         setMapTilesLoaded,
         discoverEnabledRef,
-        mapServersWithDiscoveryRef,
       ).then((viewer) => {
         onViewerReady(viewer);
       });

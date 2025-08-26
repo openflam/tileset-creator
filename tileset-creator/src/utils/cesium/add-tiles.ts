@@ -14,17 +14,20 @@ async function addTilesetFromMapInfo(
   viewer: Viewer,
   mapInfo: MapInfo,
   setMapTilesLoaded: React.Dispatch<React.SetStateAction<MapTilesLoaded>>,
-): Promise<Cesium3DTileset | CesiumModel> {
+): Promise<Cesium3DTileset | CesiumModel | null> {
   // "Default" maps are 3D Tilesets, while "Custom" maps are GLTF models.
-  let tileset: Cesium3DTileset | CesiumModel;
-  if (mapInfo.type === "default") {
-    tileset = await addDefaultMapTiles(viewer, mapInfo);
-  } else {
-    tileset = await addCustomMapTiles(viewer, mapInfo);
+  let tileset: Cesium3DTileset | CesiumModel | null = null;
+
+  if (mapInfo.url) {
+    if (mapInfo.type === "default") {
+      tileset = await addDefaultMapTiles(viewer, mapInfo);
+    } else {
+      tileset = await addCustomMapTiles(viewer, mapInfo);
+    }
+    mapInfo.tile = tileset;
   }
 
   // Update the mapTilesLoaded state
-  mapInfo.tile = tileset;
   setMapTilesLoaded((prev) => ({
     ...prev,
     [mapInfo.url]: mapInfo,

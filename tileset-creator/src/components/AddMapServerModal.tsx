@@ -11,7 +11,6 @@ type AddMapServerModalProps = {
   onClose: () => void;
   viewer: Viewer;
   setMapTilesLoaded: React.Dispatch<React.SetStateAction<MapTilesLoaded>>;
-  mapServersWithDiscoveryRef: React.RefObject<MapServer[]>;
 };
 
 function AddMapServerModal({
@@ -19,7 +18,6 @@ function AddMapServerModal({
   onClose,
   viewer,
   setMapTilesLoaded,
-  mapServersWithDiscoveryRef,
 }: AddMapServerModalProps) {
   const [mapServerURL, setMapServerURL] = useState("");
 
@@ -40,6 +38,7 @@ function AddMapServerModal({
           ),
           mapIconUrl: getFullUrl(mapServer.capabilities.iconURL, mapServerURL),
           credentialsCookiesRequired: true,
+          mapServer: mapServer,
         };
         addTilesetFromMapInfo(viewer, mapInfo, setMapTilesLoaded);
       }
@@ -48,7 +47,6 @@ function AddMapServerModal({
       const discoveryService = mapServer.getService("discovery");
       if (discoveryService) {
         alert("Discovery service found. It will be used for map discovery.");
-        mapServersWithDiscoveryRef.current.push(mapServer);
       }
 
       if (!tileService && !discoveryService) {

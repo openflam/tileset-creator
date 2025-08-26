@@ -54,22 +54,23 @@ async function mapServersToMapInfos(mapsDiscovered: {
 
   for (let i = 0; i < mapNames.length; i++) {
     const mapName = mapNames[i];
-    const map = mapsDiscovered[mapName];
+    const mapServer = mapsDiscovered[mapName];
     const tileService = tileServices[i];
     if (tileService) {
       const mapInfo: MapInfo = {
-        name: map.capabilities.commonName!,
+        name: mapServer.capabilities.commonName!,
         url: getFullUrl(tileService.url, mapName)!,
         type: "default", // All discovered maps are default maps.
         key: tileService.key,
         creditImageUrl: getFullUrl(
-          tileService.creditImageUrl || map.capabilities.iconURL,
+          tileService.creditImageUrl || mapServer.capabilities.iconURL,
           mapName,
         ),
         mapIconUrl:
-          getFullUrl(map.capabilities.iconURL, mapName) || customMapLogo,
+          getFullUrl(mapServer.capabilities.iconURL, mapName) || customMapLogo,
         credentialsCookiesRequired:
           tileService.credentialsCookiesRequired || false,
+        mapServer: mapServer,
       };
       mapInfos.push(mapInfo);
     }
@@ -117,29 +118,37 @@ async function discoverMapsDNS(
 
 async function discoverMapsServices(
   viewer: Viewer,
-  customDiscoveryServices: MapServer[],
+  mapTilesLoadedRef: React.RefObject<MapTilesLoaded>,
 ): Promise<MapInfo[]> {
   let mapInfos: MapInfo[] = [];
   let allDiscoveredMapServers: { [key: string]: MapServer } = {};
 
   // Discover maps from the custom discovery services.
-  for (const mapServer of customDiscoveryServices) {
-    const polygonGeometry = getPolygonFromViewer(viewer);
-    if (!polygonGeometry) {
-      return mapInfos;
-    }
+  const mapServers = Object.values(mapTilesLoadedRef.current)
+    .map((mapInfo: MapInfo) => mapInfo.mapServer)
+    .filter((mapServer): mapServer is MapServer => mapServer !== undefined);
 
-    const discoveredMapServers = await OpenFLAMEServices.queryDiscoveryService(
-      mapServer,
-      polygonGeometry,
-    );
+  // Keep only servers that have a discovery service
+  const serversWithDiscovery = mapServers.filter((mapServer) =>
+    mapServer.getService("discovery"),
+  );
 
-    consoleLog(`Discovered map servers from ${mapServer.name}:`);
-    consoleLog(discoveredMapServers);
+  // Get the polygon once
+  const polygonGeometry = getPolygonFromViewer(viewer);
+  if (!polygonGeometry) {
+    return mapInfos;
+  }
 
+  // Iterate through all MapServers and query their discovery services.
+  const discoveryQueryPromises = serversWithDiscovery.map((mapServer) =>
+    OpenFLAMEServices.queryDiscoveryService(mapServer, polygonGeometry),
+  );
+
+  const discoveredMapServers = await Promise.all(discoveryQueryPromises);
+  for (const mapServerDict of discoveredMapServers) {
     allDiscoveredMapServers = {
       ...allDiscoveredMapServers,
-      ...discoveredMapServers,
+      ...mapServerDict,
     };
   }
 

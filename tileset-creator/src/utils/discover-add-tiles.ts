@@ -1,4 +1,4 @@
-import { MapsDiscovery, MapServer } from "@openflam/dnsspatialdiscovery";
+import { MapsDiscovery } from "@openflam/dnsspatialdiscovery";
 import { Viewer } from "cesium";
 import { discoverMapsDNS, discoverMapsServices } from "./openflame/discover";
 import { addTilesetFromMapInfo } from "./cesium/add-tiles";
@@ -25,15 +25,14 @@ function discoverAndAddTiles(
   mapsDiscoveryObj: MapsDiscovery,
   mapTilesLoadedRef: React.RefObject<MapTilesLoaded>,
   setMapTilesLoaded: React.Dispatch<React.SetStateAction<MapTilesLoaded>>,
-  mapServersWithDiscoveryRef: React.RefObject<MapServer[]>,
 ) {
-  // Disover maps in the current view.
+  // Disover maps in the current view using DNS.
   discoverMapsDNS(viewer, mapsDiscoveryObj).then((mapInfos: MapInfo[]) => {
     addMapInfosToViewer(viewer, mapInfos, mapTilesLoadedRef, setMapTilesLoaded);
   });
 
-  // If there are custom added map servers with discovery service, discover maps from them.
-  discoverMapsServices(viewer, mapServersWithDiscoveryRef.current).then(
+  // Query the discovery services in mapInfos that have the discovery service
+  discoverMapsServices(viewer, mapTilesLoadedRef).then(
     (mapInfos: MapInfo[]) => {
       addMapInfosToViewer(
         viewer,

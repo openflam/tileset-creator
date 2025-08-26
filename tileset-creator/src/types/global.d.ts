@@ -6,6 +6,10 @@ declare global {
     name: string;
     url: string;
     type: "default" | "custom";
+
+    // The MapServer object corresponding to this MapInfo
+    mapServer?: MapServer;
+
     creditImageUrl?: string;
     mapIconUrl?: string;
 
