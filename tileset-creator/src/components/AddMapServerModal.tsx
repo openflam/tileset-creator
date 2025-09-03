@@ -28,7 +28,8 @@ function AddMapServerModal({
       const tileService = mapServer.getService("tileserver");
       if (tileService) {
         const mapInfo: MapInfo = {
-          name: mapServer.capabilities.commonName!,
+          commonName: mapServer.capabilities.commonName!,
+          name: mapServer.capabilities.name!,
           url: getFullUrl(tileService.url, mapServerURL)!,
           type: "default",
           key: tileService.key,

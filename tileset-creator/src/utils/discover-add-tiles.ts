@@ -1,6 +1,10 @@
 import { MapsDiscovery } from "@openflam/dnsspatialdiscovery";
 import { Viewer } from "cesium";
-import { discoverMapsDNS, discoverMapsServices } from "./openflame/discover";
+import {
+  discoverMapsDNS,
+  discoverMapsServices,
+  checkAuthentication,
+} from "./openflame/discover";
 import { addTilesetFromMapInfo } from "./cesium/add-tiles";
 import CONFIG from "../config";
 
@@ -12,11 +16,39 @@ function addMapInfosToViewer(
 ) {
   // Loop through the discovered maps and add them to the viewer if they are not already loaded.
   for (const mapInfo of mapInfos) {
-    const { url } = mapInfo;
-    if (mapTilesLoadedRef.current && url in mapTilesLoadedRef.current) {
+    const { name } = mapInfo;
+    if (mapTilesLoadedRef.current && name in mapTilesLoadedRef.current) {
       continue;
     }
     addTilesetFromMapInfo(viewer, mapInfo, setMapTilesLoaded);
+  }
+}
+
+async function checkAuthenticationDiscovered(
+  mapTilesLoadedRef: React.RefObject<MapTilesLoaded>,
+  setMapTilesLoaded: React.Dispatch<React.SetStateAction<MapTilesLoaded>>,
+) {
+  // Check if any of the previously discovered maps have been authenticated
+  const unauthenticatedMapNames = Object.keys(
+    mapTilesLoadedRef.current || {},
+  ).filter((name) => !mapTilesLoadedRef.current![name].authenticated);
+
+  const authCheckPromises = unauthenticatedMapNames.map((mapName) => {
+    const mapInfo = mapTilesLoadedRef.current![mapName];
+    return checkAuthentication(mapInfo.mapServer);
+  });
+
+  const authResults = await Promise.all(authCheckPromises);
+  for (let i = 0; i < unauthenticatedMapNames.length; i++) {
+    if (authResults[i]) {
+      setMapTilesLoaded((prev) => ({
+        ...prev,
+        [unauthenticatedMapNames[i]]: {
+          ...prev[unauthenticatedMapNames[i]],
+          authenticated: true,
+        },
+      }));
+    }
   }
 }
 
@@ -26,6 +58,9 @@ function discoverAndAddTiles(
   mapTilesLoadedRef: React.RefObject<MapTilesLoaded>,
   setMapTilesLoaded: React.Dispatch<React.SetStateAction<MapTilesLoaded>>,
 ) {
+  // Check if any of the previously discovered maps have been authenticated
+  checkAuthenticationDiscovered(mapTilesLoadedRef, setMapTilesLoaded);
+
   // Disover maps in the current view using DNS.
   discoverMapsDNS(viewer, mapsDiscoveryObj).then((mapInfos: MapInfo[]) => {
     addMapInfosToViewer(viewer, mapInfos, mapTilesLoadedRef, setMapTilesLoaded);

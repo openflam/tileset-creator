@@ -3,9 +3,12 @@ import { Cesium3DTileset, Model as CesiumModel } from "cesium";
 declare global {
   // Type returned by the discoverMaps function
   type MapInfo = {
-    name: string;
-    url: string;
+    commonName: string; // "Common name" borrowed from MapServer
+    name: string; // "Map name" borrowed from MapServer
     type: "default" | "custom";
+
+    // Tileset URL
+    url?: string;
 
     // The MapServer object corresponding to this MapInfo
     mapServer?: MapServer;
@@ -23,6 +26,9 @@ declare global {
     // and all requests to the map server will include credentials (cookies).
     key?: string;
     credentialsCookiesRequired?: boolean;
+
+    // False if the map needs authentication.
+    authenticated?: boolean;
   };
 
   // Dictionary to store the global state of the application

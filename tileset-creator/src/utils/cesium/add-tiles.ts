@@ -30,7 +30,7 @@ async function addTilesetFromMapInfo(
   // Update the mapTilesLoaded state
   setMapTilesLoaded((prev) => ({
     ...prev,
-    [mapInfo.url]: mapInfo,
+    [mapInfo.name]: mapInfo,
   }));
 
   return tileset;
@@ -60,7 +60,7 @@ async function addDefaultMapTiles(
   if (credentialsCookiesRequired) {
     // Add the host to the TrustedServers list to make all requests to this host
     // with credentials (cookies).
-    const host = new URL(url).host;
+    const host = new URL(url!).host;
     TrustedServers.add(host, 443);
     consoleLog(
       `Added ${host} to TrustedServers for credentials (cookies) access.`,
@@ -111,7 +111,7 @@ async function addCustomMapTiles(
   const modelMatrix = CesiumTransforms.eastNorthUpToFixedFrame(modelPosition);
 
   const model = await CesiumModel.fromGltfAsync({
-    url: url,
+    url: url!,
     modelMatrix: modelMatrix,
     scale: 1.0,
     scene: viewer.scene,

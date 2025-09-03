@@ -29,6 +29,7 @@ function AddGLBModal({
     const objectUrl = URL.createObjectURL(file);
 
     const mapInfo: MapInfo = {
+      commonName: mapName,
       name: mapName,
       url: objectUrl,
       type: "custom",

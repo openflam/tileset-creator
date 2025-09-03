@@ -36,7 +36,7 @@ function MapInfoDefault({ mapInfo }: PropsType) {
             />
           </Col>
           <Col>
-            <Card.Title className="mb-0">{mapInfo.name}</Card.Title>
+            <Card.Title className="mb-0">{mapInfo.commonName}</Card.Title>
           </Col>
         </Row>
 

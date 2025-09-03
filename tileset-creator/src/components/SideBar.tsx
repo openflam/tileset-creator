@@ -1,6 +1,7 @@
 import { Viewer } from "cesium";
 import { useState } from "react";
 import { Button, Form } from "react-bootstrap";
+import MapInfoAuth from "./MapInfoAuth";
 import MapInfoDefault from "./MapInfoDefault";
 import MapInfoCustom from "./MapInfoCustom";
 import AddGLBModal from "./AddGLBModal";
@@ -44,13 +45,32 @@ function SideBar({
       </div>
       <>
         {Object.entries(mapTilesLoaded)
-          .filter(([_, mapInfo]) => mapInfo.tile && mapInfo.type === "default")
+          .filter(
+            ([_, mapInfo]) =>
+              !mapInfo.authenticated && mapInfo.type === "default",
+          )
+          .map(([url, mapInfo]) => (
+            <MapInfoAuth key={url} mapInfo={mapInfo} />
+          ))}
+
+        {Object.entries(mapTilesLoaded)
+          .filter(
+            ([_, mapInfo]) =>
+              mapInfo.tile &&
+              mapInfo.type === "default" &&
+              mapInfo.authenticated,
+          )
           .map(([url, mapInfo]) => (
             <MapInfoDefault key={url} mapInfo={mapInfo} />
           ))}
 
         {Object.entries(mapTilesLoaded)
-          .filter(([_, mapInfo]) => mapInfo.tile && mapInfo.type === "custom")
+          .filter(
+            ([_, mapInfo]) =>
+              mapInfo.tile &&
+              mapInfo.type === "custom" &&
+              mapInfo.authenticated,
+          )
           .map(([url, mapInfo]) => (
             <MapInfoCustom key={url} mapInfo={mapInfo} />
           ))}
