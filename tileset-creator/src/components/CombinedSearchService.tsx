@@ -11,6 +11,11 @@ export interface SearchResult {
     sourceColor: string;
     sourceName: string;
     googleData?: any; // Additional Google-specific data
+    serverInfo?: {
+        serverIndex: number;
+        serverUrl: string;
+        source: string;
+    };
 }
 
 export interface CombinedSearchOptions {
@@ -21,7 +26,7 @@ export interface CombinedSearchOptions {
 }
 
 export class CombinedSearchService {
-    private nominatimService: any;
+    private nominatimServices: any[];
     private googleService: any;
     private options: CombinedSearchOptions;
 
@@ -34,8 +39,13 @@ export class CombinedSearchService {
             ...options
         };
 
+        this.nominatimServices = [];
         if (this.options.enableNominatim) {
-            this.nominatimService = new (NominatimGeocoderService as any)();
+            // Create multiple Nominatim service instances, one for each configured server
+            const serverCount = (NominatimGeocoderService as any).getServerCount();
+            for (let i = 0; i < serverCount; i++) {
+                this.nominatimServices.push(new (NominatimGeocoderService as any)(i));
+            }
         }
 
         if (this.options.enableGoogle) {
@@ -56,9 +66,9 @@ export class CombinedSearchService {
 
         const searchPromises: Promise<SearchResult[]>[] = [];
 
-        // Search Nominatim
-        if (this.options.enableNominatim && this.nominatimService) {
-            searchPromises.push(this.searchNominatim(query, signal));
+        // Search all Nominatim servers
+        if (this.options.enableNominatim && this.nominatimServices.length > 0) {
+            searchPromises.push(this.searchAllNominatimServers(query, signal));
         }
 
         // Search Google
@@ -98,26 +108,41 @@ export class CombinedSearchService {
     }
 
     /**
-     * Search Nominatim API
+     * Search all configured Nominatim servers in parallel
      */
-    private async searchNominatim(query: string, signal?: AbortSignal): Promise<SearchResult[]> {
+    private async searchAllNominatimServers(query: string, signal?: AbortSignal): Promise<SearchResult[]> {
         try {
             // Check if search was cancelled
             if (signal?.aborted) {
                 throw new Error('Search was cancelled');
             }
+
+            // Search all Nominatim servers in parallel
+            const nominatimPromises = this.nominatimServices.map(async (service, index) => {
+                try {
+                    const results = await service.geocode(query);
+                    return results.slice(0, this.options.maxResultsPerSource).map((result: any) => ({
+                        ...result,
+                        source: 'nominatim' as const,
+                        sourceIcon: '🌍',
+                        sourceColor: '#7cb342',
+                        sourceName: `OpenStreetMap ${index + 1}`,
+                        serverInfo: result.serverInfo || { serverIndex: index, source: 'nominatim' }
+                    }));
+                } catch (error) {
+                    console.error(`Nominatim server ${index} search error:`, error);
+                    return [];
+                }
+            });
+
+            // Wait for all Nominatim servers to respond
+            const allNominatimResults = await Promise.all(nominatimPromises);
             
-            const results = await this.nominatimService.geocode(query);
-            
-            return results.slice(0, this.options.maxResultsPerSource).map((result: any) => ({
-                ...result,
-                source: 'nominatim' as const,
-                sourceIcon: '🌍',
-                sourceColor: '#7cb342',
-                sourceName: 'OpenStreetMap',
-            }));
+            // Flatten the results array
+            return allNominatimResults.flat();
+
         } catch (error) {
-            console.error('Nominatim search error:', error);
+            console.error('All Nominatim servers search error:', error);
             return [];
         }
     }
@@ -184,10 +209,28 @@ export class CombinedSearchService {
      * Get search statistics
      */
     getSearchStats(results: SearchResult[]) {
+        const nominatimResults = results.filter(r => r.source === 'nominatim');
+        const googleResults = results.filter(r => r.source === 'google');
+        
+        // Group Nominatim results by server
+        const serverStats: { [key: number]: number } = {};
+        nominatimResults.forEach(result => {
+            if (result.serverInfo?.serverIndex !== undefined) {
+                const serverIndex = result.serverInfo.serverIndex;
+                serverStats[serverIndex] = (serverStats[serverIndex] || 0) + 1;
+            }
+        });
+
         const stats = {
             total: results.length,
-            nominatim: results.filter(r => r.source === 'nominatim').length,
-            google: results.filter(r => r.source === 'google').length,
+            nominatim: nominatimResults.length,
+            google: googleResults.length,
+            servers: serverStats,
+            serverDetails: Object.entries(serverStats).map(([index, count]) => ({
+                serverIndex: parseInt(index),
+                count,
+                results: nominatimResults.filter(r => r.serverInfo?.serverIndex === parseInt(index))
+            }))
         };
 
         return stats;
@@ -205,6 +248,27 @@ export class CombinedSearchService {
      */
     getUniqueSources(results: SearchResult[]): string[] {
         return [...new Set(results.map(r => r.source))];
+    }
+
+    /**
+     * Get information about all configured servers
+     */
+    getServerInfo() {
+        const nominatimUrls = (NominatimGeocoderService as any).getServerUrls();
+        return {
+            nominatim: {
+                count: this.nominatimServices.length,
+                servers: nominatimUrls.map((url: string, index: number) => ({
+                    index,
+                    url,
+                    name: `OpenStreetMap ${index + 1}`
+                }))
+            },
+            google: {
+                enabled: !!this.googleService,
+                name: 'Google Maps'
+            }
+        };
     }
 }
 

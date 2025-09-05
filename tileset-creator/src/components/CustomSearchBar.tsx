@@ -16,7 +16,13 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({ viewer }) => {
     const [results, setResults] = useState<SearchResult[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
-    const [searchStats, setSearchStats] = useState({ total: 0, nominatim: 0, google: 0 });
+    const [searchStats, setSearchStats] = useState({ 
+        total: 0, 
+        nominatim: 0, 
+        google: 0, 
+        servers: {} as { [key: number]: number },
+        serverDetails: [] as Array<{ serverIndex: number; count: number; results: any[] }>
+    });
     const [isResultSelected, setIsResultSelected] = useState(false);
     const searchRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -40,7 +46,7 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({ viewer }) => {
             } else {
                 setResults([]);
                 setShowDropdown(false);
-                setSearchStats({ total: 0, nominatim: 0, google: 0 });
+                setSearchStats({ total: 0, nominatim: 0, google: 0, servers: {}, serverDetails: [] });
             }
         }, 300);
 
@@ -84,7 +90,7 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({ viewer }) => {
             if (error instanceof Error && error.name === 'AbortError') return;
             console.error('Search error:', error);
             setResults([]);
-            setSearchStats({ total: 0, nominatim: 0, google: 0 });
+            setSearchStats({ total: 0, nominatim: 0, google: 0, servers: {}, serverDetails: [] });
         } finally {
             setIsLoading(false);
         }
@@ -104,7 +110,7 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({ viewer }) => {
         
         // Clear results to prevent further searching
         setResults([]);
-        setSearchStats({ total: 0, nominatim: 0, google: 0 });
+        setSearchStats({ total: 0, nominatim: 0, google: 0, servers: {}, serverDetails: [] });
 
         // Update the search input with the selected result AFTER clearing results
         setQuery(result.displayName);
@@ -132,7 +138,7 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({ viewer }) => {
         setQuery('');
         setResults([]);
         setShowDropdown(false);
-        setSearchStats({ total: 0, nominatim: 0, google: 0 });
+        setSearchStats({ total: 0, nominatim: 0, google: 0, servers: {}, serverDetails: [] });
         setIsResultSelected(false);
         if (inputRef.current) {
             inputRef.current.focus();
@@ -155,8 +161,64 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({ viewer }) => {
         }
     };
 
-    const getSourceName = (source: string) => {
-        return source === 'nominatim' ? 'OSM' : 'Google';
+    const getSourceName = (result: SearchResult) => {
+        if (result.source === 'google') {
+            return 'Google';
+        }
+        
+        // For Nominatim results, show server-specific names
+        if (result.serverInfo?.serverIndex !== undefined) {
+            const serverIndex = result.serverInfo.serverIndex;
+            const serverUrl = result.serverInfo.serverUrl;
+            
+            // Extract domain or localhost info for display
+            try {
+                const url = new URL(serverUrl);
+                if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+                    return `OSM-${serverIndex + 1}`;
+                } else if (url.hostname === 'nominatim.openstreetmap.org') {
+                    return 'OSM-Public';
+                } else {
+                    // Extract first part of domain name
+                    const domain = url.hostname.split('.')[0];
+                    return `OSM-${domain}`;
+                }
+            } catch {
+                return `OSM-${serverIndex + 1}`;
+            }
+        }
+        
+        return 'OSM';
+    };
+
+    const getServerIcon = (result: SearchResult) => {
+        if (result.source === 'google') {
+            return '🗺️';
+        }
+        
+        // Different icons for different OSM servers
+        if (result.serverInfo?.serverIndex !== undefined) {
+            const serverIndex = result.serverInfo.serverIndex;
+            const icons = ['🌍', '📍', '🏠', '🌎', '🌏', '🗺️',  '🌐', '🌟'];
+            return icons[serverIndex % icons.length];
+        }
+        
+        return '🌍';
+    };
+
+    const getServerColor = (result: SearchResult) => {
+        if (result.source === 'google') {
+            return '#4285f4';
+        }
+        
+        // Different colors for different OSM servers
+        if (result.serverInfo?.serverIndex !== undefined) {
+            const serverIndex = result.serverInfo.serverIndex;
+            const colors = ['#7cb342', '#2e7d32', '#388e3c', '#43a047', '#66bb6a', '#81c784', '#a5d6a7', '#c8e6c9'];
+            return colors[serverIndex % colors.length];
+        }
+        
+        return '#7cb342';
     };
 
     return (
@@ -225,14 +287,28 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({ viewer }) => {
                                     Combined Search Results
                                 </span>
                                 <div className="custom-search-stats">
-                                    <span className="stat-item">
-                                        <span className="stat-icon">🌍</span>
-                                        <span className="stat-count">{searchStats.nominatim}</span>
-                                    </span>
-                                    <span className="stat-item">
-                                        <span className="stat-icon">🗺️</span>
-                                        <span className="stat-count">{searchStats.google}</span>
-                                    </span>
+                                    {/* Individual server stats */}
+                                    {searchStats.serverDetails.map((serverDetail) => {
+                                        // Get a sample result to determine server info
+                                        const sampleResult = serverDetail.results[0];
+                                        if (!sampleResult) return null;
+                                        
+                                        return (
+                                            <span key={serverDetail.serverIndex} className="stat-item">
+                                                <span className="stat-icon">{getServerIcon(sampleResult)}</span>
+                                                <span className="stat-count">{serverDetail.count}</span>
+                                                <span className="stat-label">{getSourceName(sampleResult)}</span>
+                                            </span>
+                                        );
+                                    })}
+                                    {/* Google stats */}
+                                    {searchStats.google > 0 && (
+                                        <span className="stat-item">
+                                            <span className="stat-icon">🗺️</span>
+                                            <span className="stat-count">{searchStats.google}</span>
+                                            <span className="stat-label">Google</span>
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                             
@@ -255,11 +331,12 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({ viewer }) => {
                                     <div 
                                         className="custom-search-result-badge"
                                         style={{ 
-                                            background: `linear-gradient(135deg, ${result.sourceColor} 0%, ${result.sourceColor}dd 100%)`,
+                                            background: `linear-gradient(135deg, ${getServerColor(result)} 0%, ${getServerColor(result)}dd 100%)`,
                                             color: 'white'
                                         }}
+                                        title={result.serverInfo?.serverUrl || `${result.source} server`}
                                     >
-                                        {result.sourceIcon} {getSourceName(result.source)}
+                                        {getServerIcon(result)} {getSourceName(result)}
                                     </div>
                                 </div>
                             ))}

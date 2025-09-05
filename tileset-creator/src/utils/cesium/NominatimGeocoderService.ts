@@ -1,15 +1,20 @@
 import { Rectangle, Credit, Resource } from 'cesium';
+import CONFIG from '../../config';
 
-const API_URL = "https://nominatim.openstreetmap.org/search";
 const CREDIT_HTML = `<a href="https://nominatim.openstreetmap.org/" target="_blank">© OpenStreetMap contributors</a>`;
 
 /**
  * Provides geocoding through OpenStreetMap's Nominatim API.
- * This service follows Cesium's GeocoderService interface.
+ * This service follows Cesium's GeocoderService interface and supports multiple Nominatim servers.
  */
-function NominatimGeocoderService(this: any) {
+function NominatimGeocoderService(this: any, serverIndex: number = 0) {
+  const apiUrls = CONFIG.NOMINATIM_API_URLS;
+  const selectedUrl = apiUrls[serverIndex] || apiUrls[0]; // Fallback to first URL if index is out of bounds
+  
+  this._serverIndex = serverIndex;
+  this._apiUrls = apiUrls;
   this._resource = new Resource({
-    url: API_URL,
+    url: selectedUrl,
     queryParameters: {
       format: "json",
       addressdetails: 1,
@@ -77,6 +82,12 @@ NominatimGeocoderService.prototype.geocode = async function (query: string) {
           html: CREDIT_HTML,
           collapsible: false,
         },
+        // Additional metadata about which server provided this result
+        serverInfo: {
+          serverIndex: this._serverIndex,
+          serverUrl: this._resource.url,
+          source: 'nominatim'
+        },
       };
     });
 
@@ -88,6 +99,20 @@ NominatimGeocoderService.prototype.geocode = async function (query: string) {
     console.error('Nominatim geocoding error:', error);
     return [];
   }
+};
+
+/**
+ * Get the number of configured Nominatim servers
+ */
+NominatimGeocoderService.getServerCount = function() {
+  return CONFIG.NOMINATIM_API_URLS.length;
+};
+
+/**
+ * Get all configured Nominatim server URLs
+ */
+NominatimGeocoderService.getServerUrls = function() {
+  return [...CONFIG.NOMINATIM_API_URLS];
 };
 
 export default NominatimGeocoderService; 
