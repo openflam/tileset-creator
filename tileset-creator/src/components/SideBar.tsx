@@ -27,8 +27,8 @@ function SideBar({
   const [editEnabled, setEditEnabled] = useState(false);
 
   return (
-    <div className="p-3" style={{ overflowY: "scroll", height: "100vh" }}>
-      <div className="d-flex align-items-center mb-3">
+    <div className="p-3">
+      <div className="d-lg-flex align-items-center mb-3">
         <Form.Check
           type="switch"
           checked={discoverEnabled}
@@ -39,7 +39,7 @@ function SideBar({
         <Form.Check
           type="switch"
           checked={editEnabled}
-          label="Edit Mode"
+          label="Edit"
           onClick={() => setEditEnabled(!editEnabled)}
         />
       </div>

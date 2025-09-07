@@ -17,10 +17,20 @@ function HomePage() {
 
   const mapsDiscoveryObj = new MapsDiscovery(CONFIG.DISCOVERY_SUFFIX);
 
+  const sidebarComponent = viewer ? (
+    <SideBar
+      mapTilesLoaded={mapTilesLoaded}
+      setMapTilesLoaded={setMapTilesLoaded}
+      viewer={viewer}
+      discoverEnabled={discoverEnabled}
+      setDiscoverEnabled={setDiscoverEnabled}
+    />
+  ) : null;
+
   return (
     <Container fluid className="p-0 m-0">
       <Row className="g-0">
-        <Col>
+        <Col lg={9}>
           <CesiumViewer
             mapTilesLoaded={mapTilesLoaded}
             setMapTilesLoaded={setMapTilesLoaded}
@@ -29,18 +39,49 @@ function HomePage() {
             discoverEnabled={discoverEnabled}
           />
         </Col>
-        <Col xs={3}>
-          {viewer && (
-            <SideBar
-              mapTilesLoaded={mapTilesLoaded}
-              setMapTilesLoaded={setMapTilesLoaded}
-              viewer={viewer}
-              discoverEnabled={discoverEnabled}
-              setDiscoverEnabled={setDiscoverEnabled}
-            />
-          )}
+
+        {/* Static sidebar at lg+ (hidden below lg) */}
+        <Col
+          lg={3}
+          className="d-none d-lg-block"
+          style={{ overflowY: "scroll", height: "100vh" }}
+        >
+          {sidebarComponent}
         </Col>
       </Row>
+
+      {/* Mobile-only hamburger. Only visible in <lg */}
+      <button
+        className="btn btn-primary d-lg-none position-fixed top-0 end-0 mt-5 me-3 p-2"
+        type="button"
+        style={{ zIndex: 1000 }}
+        data-bs-toggle="offcanvas"
+        data-bs-target="#sidebarOffcanvas"
+      >
+        <i className="bi bi-list" style={{ fontSize: "1.5rem" }}></i>
+      </button>
+
+      {/* Mobile-only offcanvas sidebar. Only visible in <lg */}
+      <div
+        className="offcanvas offcanvas-end"
+        tabIndex={-1}
+        id="sidebarOffcanvas"
+        style={{
+          overflowY: "scroll",
+          width: "300px",
+          height: "100vh",
+          zIndex: 1100,
+        }}
+      >
+        <div className="offcanvas-header">
+          <button
+            type="button"
+            className="btn-close text-reset"
+            data-bs-dismiss="offcanvas"
+          ></button>
+        </div>
+        <div className="offcanvas-body">{sidebarComponent}</div>
+      </div>
     </Container>
   );
 }
