@@ -63,7 +63,7 @@ function HomePage() {
 
       {/* Mobile-only offcanvas sidebar. Only visible in <lg */}
       <div
-        className="offcanvas offcanvas-end"
+        className="offcanvas offcanvas-end d-lg-none"
         tabIndex={-1}
         id="sidebarOffcanvas"
         style={{
