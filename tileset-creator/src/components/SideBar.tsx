@@ -65,12 +65,7 @@ function SideBar({
           ))}
 
         {Object.entries(mapTilesLoaded)
-          .filter(
-            ([_, mapInfo]) =>
-              mapInfo.tile &&
-              mapInfo.type === "custom" &&
-              mapInfo.authenticated,
-          )
+          .filter(([_, mapInfo]) => mapInfo.tile && mapInfo.type === "custom")
           .map(([url, mapInfo]) => (
             <MapInfoCustom key={url} mapInfo={mapInfo} />
           ))}

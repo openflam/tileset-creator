@@ -29,9 +29,9 @@ async function checkAuthenticationDiscovered(
   setMapTilesLoaded: React.Dispatch<React.SetStateAction<MapTilesLoaded>>,
 ) {
   // Check if any of the previously discovered maps have been authenticated
-  const unauthenticatedMapNames = Object.keys(
-    mapTilesLoadedRef.current || {},
-  ).filter((name) => !mapTilesLoadedRef.current![name].authenticated);
+  const unauthenticatedMapNames = Object.keys(mapTilesLoadedRef.current || {})
+    .filter((name) => !mapTilesLoadedRef.current![name].authenticated)
+    .filter((name) => mapTilesLoadedRef.current![name].type === "default");
 
   const authCheckPromises = unauthenticatedMapNames.map((mapName) => {
     const mapInfo = mapTilesLoadedRef.current![mapName];
