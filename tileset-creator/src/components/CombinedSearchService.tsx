@@ -16,6 +16,7 @@ export interface SearchResult {
         serverUrl: string;
         source: string;
     };
+    _rawNominatimData?: any; // Raw Nominatim API response data
 }
 
 export interface CombinedSearchOptions {

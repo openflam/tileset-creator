@@ -14,6 +14,7 @@ function HomePage() {
   const [mapTilesLoaded, setMapTilesLoaded] = useState<MapTilesLoaded>({});
   const [viewer, setViewer] = useState<Viewer | null>(null);
   const [discoverEnabled, setDiscoverEnabled] = useState(true);
+  const [googleOpacity, setGoogleOpacity] = useState(1);
 
   const mapsDiscoveryObj = new MapsDiscovery(CONFIG.DISCOVERY_SUFFIX);
 
@@ -24,6 +25,8 @@ function HomePage() {
       viewer={viewer}
       discoverEnabled={discoverEnabled}
       setDiscoverEnabled={setDiscoverEnabled}
+      googleOpacity={googleOpacity}
+      onGoogleOpacityChange={setGoogleOpacity}
     />
   ) : null;
 
@@ -37,6 +40,8 @@ function HomePage() {
             onViewerReady={(v) => setViewer(v)}
             mapsDiscoveryObj={mapsDiscoveryObj}
             discoverEnabled={discoverEnabled}
+            googleOpacity={googleOpacity}
+            setGoogleOpacity={setGoogleOpacity}
           />
         </Col>
 

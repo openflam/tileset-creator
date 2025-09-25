@@ -84,6 +84,8 @@ type propsType = {
   onViewerReady: (viewer: Viewer) => void;
   mapsDiscoveryObj: MapsDiscovery;
   discoverEnabled: boolean;
+  googleOpacity: number;
+  setGoogleOpacity: React.Dispatch<React.SetStateAction<number>>;
 };
 
 function CesiumViewer({
@@ -92,6 +94,8 @@ function CesiumViewer({
   onViewerReady,
   mapsDiscoveryObj,
   discoverEnabled,
+  googleOpacity: _googleOpacity,
+  setGoogleOpacity,
 }: propsType) {
   const viewerRef = useRef<HTMLDivElement>(null);
   const [viewer, setViewer] = useState<Viewer | null>(null);
@@ -148,7 +152,14 @@ function CesiumViewer({
   return (
     <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
       <div ref={viewerRef} style={{ width: '100%', height: '100%' }} />
-      <CustomSearchBar viewer={viewer} />
+             <CustomSearchBar 
+                 viewer={viewer} 
+                 mapTilesLoaded={mapTilesLoaded}
+                 mapsDiscoveryObj={mapsDiscoveryObj}
+                 mapTilesLoadedRef={mapTilesLoadedRef}
+                 setMapTilesLoaded={setMapTilesLoaded}
+                 setGoogleOpacity={setGoogleOpacity}
+             />
     </div>
   );
 }

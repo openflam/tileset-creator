@@ -6,6 +6,7 @@ import MapInfoDefault from "./MapInfoDefault";
 import MapInfoCustom from "./MapInfoCustom";
 import AddGLBModal from "./AddGLBModal";
 import AddMapServerModal from "./AddMapServerModal";
+import CameraInfoModal from "./CameraInfoModal";
 
 type propsType = {
   mapTilesLoaded: MapTilesLoaded;
@@ -13,6 +14,8 @@ type propsType = {
   viewer: Viewer;
   discoverEnabled: boolean;
   setDiscoverEnabled: React.Dispatch<React.SetStateAction<boolean>>;
+  googleOpacity: number;
+  onGoogleOpacityChange: (opacity: number) => void;
 };
 
 function SideBar({
@@ -21,9 +24,12 @@ function SideBar({
   viewer,
   discoverEnabled,
   setDiscoverEnabled,
+  googleOpacity,
+  onGoogleOpacityChange,
 }: propsType) {
   const [showAddGLBModal, setShowAddGLBModal] = useState(false);
   const [showAddMapServerModal, setShowAddMapServerModal] = useState(false);
+  const [showCameraInfoModal, setShowCameraInfoModal] = useState(false);
   const [editEnabled, setEditEnabled] = useState(false);
 
   return (
@@ -60,9 +66,19 @@ function SideBar({
               mapInfo.type === "default" &&
               mapInfo.authenticated,
           )
-          .map(([url, mapInfo]) => (
-            <MapInfoDefault key={url} mapInfo={mapInfo} />
-          ))}
+          .map(([url, mapInfo]) => {
+            // Check if this is the Google tileset
+            const isGoogle = mapInfo.name === 'Google' || mapInfo.commonName === 'Google';
+            
+            return (
+              <MapInfoDefault 
+                key={url} 
+                mapInfo={mapInfo}
+                externalOpacity={isGoogle ? googleOpacity : undefined}
+                onOpacityChange={isGoogle ? onGoogleOpacityChange : undefined}
+              />
+            );
+          })}
 
         {Object.entries(mapTilesLoaded)
           .filter(([_, mapInfo]) => mapInfo.tile && mapInfo.type === "custom")
@@ -72,6 +88,14 @@ function SideBar({
       </>
       {editEnabled && (
         <>
+          <Button
+            variant="info"
+            className="w-100 mt-3"
+            onClick={() => setShowCameraInfoModal(true)}
+          >
+            Camera Info
+          </Button>
+
           <Button
             variant="primary"
             className="w-100 mt-3"
@@ -89,6 +113,12 @@ function SideBar({
           </Button>
         </>
       )}
+
+      <CameraInfoModal
+        show={showCameraInfoModal}
+        onClose={() => setShowCameraInfoModal(false)}
+        viewer={viewer}
+      />
 
       <AddGLBModal
         show={showAddGLBModal}

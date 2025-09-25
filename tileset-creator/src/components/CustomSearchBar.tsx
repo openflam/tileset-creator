@@ -4,14 +4,21 @@ import { Search, GeoAlt, X, Globe } from 'react-bootstrap-icons';
 import CombinedSearchService from './CombinedSearchService';
 import type { SearchResult } from './CombinedSearchService';
 import { flyToSearchResult } from '../utils/cesium/customDestinationFound';
-import { Viewer } from 'cesium';
+import { flyToCameraView } from '../utils/cesium/camera-utils';
+import { Viewer, Rectangle, Math as CesiumMath } from 'cesium';
 import '../styles/CustomSearchBar.css';
+import { discoverAndAddTiles } from '../utils/discover-add-tiles';
 
 interface CustomSearchBarProps {
     viewer: Viewer | null;
+    mapTilesLoaded: MapTilesLoaded;
+    mapsDiscoveryObj: any;
+    mapTilesLoadedRef: React.RefObject<MapTilesLoaded>;
+    setMapTilesLoaded: React.Dispatch<React.SetStateAction<MapTilesLoaded>>;
+    setGoogleOpacity: React.Dispatch<React.SetStateAction<number>>;
 }
 
-const CustomSearchBar: React.FC<CustomSearchBarProps> = ({ viewer }) => {
+const CustomSearchBar: React.FC<CustomSearchBarProps> = ({ viewer, mapsDiscoveryObj, mapTilesLoadedRef, setMapTilesLoaded, setGoogleOpacity }) => {
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<SearchResult[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -53,6 +60,71 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({ viewer }) => {
         return () => clearTimeout(timeoutId);
     }, [query, isResultSelected]);
 
+    // Define CICFloorTwo specific camera view
+    const CIC_FLOOR_TWO_VIEW = {
+        "type": "CameraView" as const,
+        "position": {
+            "longitude": -79.9465556853944,
+            "latitude": 40.44392979719272,
+            "height": 310.5699480100303
+        },
+        "orientation": {
+            "heading": 10.691949943776875,
+            "pitch": -84.13735772439017,
+            "roll": 0.0007967919396861882
+        },
+        "boundingBox": {
+            "west": -79.9488263160273,
+            "south": 40.442440905642364,
+            "east": -79.94385645418721,
+            "north": 40.44620178934592
+        },
+        "timestamp": "2025-09-18T16:49:28.005Z"
+    };
+
+    // Function to generate camera view from search result data
+    const generateCameraViewFromResult = (result: SearchResult) => {
+        // Extract coordinates from the result
+        let longitude = 0, latitude = 0, height = 300;
+
+        if (result.destination) {
+            if (typeof result.destination === 'object' && 'longitude' in result.destination && 'latitude' in result.destination) {
+                longitude = result.destination.longitude;
+                latitude = result.destination.latitude;
+            } else if (result.destination instanceof Rectangle) {
+                const center = Rectangle.center(result.destination);
+                longitude = CesiumMath.toDegrees(center.longitude);
+                latitude = CesiumMath.toDegrees(center.latitude);
+            }
+        }
+
+        if (result.altitude) {
+            height = result.altitude;
+        }
+
+        return {
+            "type": "CameraView" as const,
+            "position": {
+                "longitude": longitude,
+                "latitude": latitude,
+                "height": height
+            },
+            "orientation": {
+                "heading": 0,
+                "pitch": -89, // Top-down view
+                "roll": 0
+            },
+            "boundingBox": {
+                "west": longitude - 0.001,
+                "south": latitude - 0.001,
+                "east": longitude + 0.001,
+                "north": latitude + 0.001
+            },
+            "timestamp": new Date().toISOString()
+        };
+    };
+
+
     // Close dropdown when clicking outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -87,7 +159,9 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({ viewer }) => {
             const stats = combinedSearchService.current.getSearchStats(searchResults);
             setSearchStats(stats);
         } catch (error) {
-            if (error instanceof Error && error.name === 'AbortError') return;
+            if (error instanceof Error && error.name === 'AbortError') {
+                return;
+            }
             console.error('Search error:', error);
             setResults([]);
             setSearchStats({ total: 0, nominatim: 0, google: 0, servers: {}, serverDetails: [] });
@@ -115,19 +189,89 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({ viewer }) => {
         // Update the search input with the selected result AFTER clearing results
         setQuery(result.displayName);
 
+        // Check if this is a special location by looking for height in the raw Nominatim data
+        const hasHeightInTags = result._rawNominatimData && 
+                               result._rawNominatimData.extratags && 
+                               result._rawNominatimData.extratags.height;
+        
+        // Special case: CICFloorTwo should still use the predefined view
+        const resultName = result.displayName.toLowerCase();
+        const isCICFloorTwo = resultName.includes('cicfloortwo') || 
+                             resultName.includes('cic floor two') ||
+                             resultName.includes('collaborative innovation center');
+        
+        const isSpecialLocation = hasHeightInTags;
+
+        // Log for special locations only
+        if (isSpecialLocation) {
+            console.log('🎯 Special Location Selected (has height):', {
+                displayName: result.displayName,
+                altitude: result.altitude,
+                heightFromTags: result._rawNominatimData?.extratags?.height
+            });
+        }
+
+        // Log raw Nominatim data when result is selected
+        if (result._rawNominatimData) {
+            console.log('🌐 Raw Nominatim Data for Selected Result:', {
+                selectedResult: result.displayName,
+                rawNominatimResponse: result._rawNominatimData,
+                hasExtratags: !!result._rawNominatimData.extratags,
+                hasHeight: result._rawNominatimData.extratags && 'height' in result._rawNominatimData.extratags,
+                hasEle: result._rawNominatimData.extratags && 'ele' in result._rawNominatimData.extratags,
+                allRawKeys: Object.keys(result._rawNominatimData),
+                extratags: result._rawNominatimData.extratags,
+                timestamp: new Date().toISOString()
+            });
+        }
+
         // Fly to the selected location
         if (viewer) {
             try {
                 // Cancel any ongoing camera flight before starting a new one
                 if (typeof (viewer.camera as any).cancelFlight === 'function') {
                     (viewer.camera as any).cancelFlight();
+                    console.log('🚫 Cancelled ongoing camera flight');
                 }
-                flyToSearchResult(result, viewer);
+
+                if (isSpecialLocation) {
+                    let cameraView;
+                    let locationName = '';
+
+                    if (isCICFloorTwo) {
+                        cameraView = CIC_FLOOR_TWO_VIEW;
+                        locationName = 'CICFloorTwo';
+                    } else {
+                        // Generate camera view from search result data for locations with height
+                        cameraView = generateCameraViewFromResult(result);
+                        locationName = result.displayName;
+                    }
+
+                    // First fly to the destination, then apply opacity change
+                    flyToCameraView(viewer, cameraView).then(() => {
+                        // Reduce Google tileset opacity to 30% to make the special location more visible
+                        setTimeout(() => {
+                            setGoogleOpacity(0.3);
+                        }, 100);
+                    }).catch((err) => {
+                        console.error(`Failed to fly to ${locationName}:`, err);
+                    });
+                } else {
+                    // Restore Google tileset opacity to full for standard results
+                    setGoogleOpacity(1.0);
+                    
+                    // Use default search result navigation for other results
+                    flyToSearchResult(result, viewer);
+                    discoverAndAddTiles(
+                        viewer,
+                        mapsDiscoveryObj,
+                        mapTilesLoadedRef,
+                        setMapTilesLoaded,
+                      );
+                }
             } catch (err) {
                 console.error('Failed to fly to location:', err);
             }
-        } else {
-            console.error('Viewer is not available');
         }
 
         // Do not immediately reset the selection flag here.
@@ -135,11 +279,15 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({ viewer }) => {
     };
 
     const handleClear = () => {
+        // Restore Google tileset opacity to full when clearing
+        setGoogleOpacity(1.0);
+        
         setQuery('');
         setResults([]);
         setShowDropdown(false);
         setSearchStats({ total: 0, nominatim: 0, google: 0, servers: {}, serverDetails: [] });
         setIsResultSelected(false);
+        
         if (inputRef.current) {
             inputRef.current.focus();
         }

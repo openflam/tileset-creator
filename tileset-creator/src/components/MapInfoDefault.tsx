@@ -1,5 +1,6 @@
 import { Cesium3DTileset, Cesium3DTileStyle } from "cesium";
 import { Card, Form, Row, Col, Image } from "react-bootstrap";
+import { useState, useEffect } from "react";
 
 const changeTilesetOpacity = (tileset: Cesium3DTileset, opacity: number) => {
   if (tileset) {
@@ -18,11 +19,22 @@ const changeTilesetVisibility = (
   }
 };
 
-// Define the type for the props
 interface PropsType {
   mapInfo: MapInfo;
+  externalOpacity?: number;
+  onOpacityChange?: (opacity: number) => void;
 }
-function MapInfoDefault({ mapInfo }: PropsType) {
+
+function MapInfoDefault({ mapInfo, externalOpacity, onOpacityChange }: PropsType) {
+  const [opacity, setOpacity] = useState(1);
+
+  // Sync with external opacity changes
+  useEffect(() => {
+    if (externalOpacity !== undefined && externalOpacity !== opacity) {
+      setOpacity(externalOpacity);
+      changeTilesetOpacity(mapInfo.tile as Cesium3DTileset, externalOpacity);
+    }
+  }, [externalOpacity, opacity, mapInfo.tile]);
   return (
     <Card className="w-100 mb-3">
       <Card.Body>
@@ -60,13 +72,15 @@ function MapInfoDefault({ mapInfo }: PropsType) {
               min={0}
               max={1}
               step={0.1}
-              defaultValue={1}
-              // onChange={(e) => { changeTilesetOpacity(url, setMapTilesLoaded, parseFloat(e.target.value)); }}
+              value={opacity}
               onChange={(e) => {
+                const newOpacity = parseFloat(e.target.value);
+                setOpacity(newOpacity);
                 changeTilesetOpacity(
                   mapInfo.tile as Cesium3DTileset,
-                  parseFloat(e.target.value),
+                  newOpacity,
                 );
+                onOpacityChange?.(newOpacity);
               }}
             />
           </Form.Group>
