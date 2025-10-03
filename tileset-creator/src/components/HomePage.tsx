@@ -4,6 +4,7 @@ import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import { useState } from "react";
+import type { LabelInfo } from "./LabelCard";
 
 import CONFIG from "../config";
 import CesiumViewer from "./CesiumViewer";
@@ -15,6 +16,7 @@ function HomePage() {
   const [viewer, setViewer] = useState<Viewer | null>(null);
   const [discoverEnabled, setDiscoverEnabled] = useState(true);
   const [googleOpacity, setGoogleOpacity] = useState(1);
+  const [labels, setLabels] = useState<LabelInfo[]>([]);
 
   const mapsDiscoveryObj = new MapsDiscovery(CONFIG.DISCOVERY_SUFFIX);
 
@@ -27,6 +29,8 @@ function HomePage() {
       setDiscoverEnabled={setDiscoverEnabled}
       googleOpacity={googleOpacity}
       onGoogleOpacityChange={setGoogleOpacity}
+      labels={labels}
+      setLabels={setLabels}
     />
   ) : null;
 
