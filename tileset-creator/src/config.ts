@@ -2,6 +2,9 @@ type ConfigType = {
   DISCOVERY_SUFFIX: string;
   GOOGLE_3D_TILES: MapInfo;
   CESIUM_ION_TOKEN: string;
+  MODE: "global" | "map-server";
+  API_LIST_MAPS: string;
+  DEFAULT_MAP_SERVER: MapInfo;
 };
 
 const CONFIG: ConfigType = {
@@ -18,6 +21,17 @@ const CONFIG: ConfigType = {
     authenticated: true,
   },
   CESIUM_ION_TOKEN: import.meta.env.VITE_CESIUM_ION_TOKEN as string,
+  // Set the mode directly. Options: "global" or "map-server"
+  MODE: "map-server",
+  API_LIST_MAPS:
+    import.meta.env.VITE_API_LIST_MAPS || "http://localhost:8000/maps",
+  DEFAULT_MAP_SERVER: {
+    name: "Default Map Server",
+    commonName: "Default Map Server",
+    type: "custom",
+    url: "http://localhost:8000/default_map", // A placeholder URL
+    authenticated: true,
+  },
 };
 
 export default CONFIG;

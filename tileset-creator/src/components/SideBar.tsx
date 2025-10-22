@@ -6,6 +6,8 @@ import MapInfoDefault from "./MapInfoDefault";
 import MapInfoCustom from "./MapInfoCustom";
 import AddGLBModal from "./AddGLBModal";
 import AddMapServerModal from "./AddMapServerModal";
+import SelectMapModal from "./SelectMapModal";
+import CONFIG from "../config";
 
 type propsType = {
   mapTilesLoaded: MapTilesLoaded;
@@ -24,23 +26,26 @@ function SideBar({
 }: propsType) {
   const [showAddGLBModal, setShowAddGLBModal] = useState(false);
   const [showAddMapServerModal, setShowAddMapServerModal] = useState(false);
+  const [showSelectMapModal, setShowSelectMapModal] = useState(false);
   const [editEnabled, setEditEnabled] = useState(false);
 
   return (
     <div className="p-3">
       <div className="d-lg-flex align-items-center mb-3">
-        <Form.Check
-          type="switch"
-          checked={discoverEnabled}
-          label="Discover"
-          className="me-3"
-          onClick={() => setDiscoverEnabled(!discoverEnabled)}
-        />
+        {CONFIG.MODE === "global" && (
+          <Form.Check
+            type="switch"
+            checked={discoverEnabled}
+            label="Discover"
+            className="me-3"
+            onChange={() => setDiscoverEnabled(!discoverEnabled)}
+          />
+        )}
         <Form.Check
           type="switch"
           checked={editEnabled}
           label="Edit"
-          onClick={() => setEditEnabled(!editEnabled)}
+          onChange={() => setEditEnabled(!editEnabled)}
         />
       </div>
       <>
@@ -70,7 +75,7 @@ function SideBar({
             <MapInfoCustom key={url} mapInfo={mapInfo} />
           ))}
       </>
-      {editEnabled && (
+      {editEnabled && CONFIG.MODE === "global" && (
         <>
           <Button
             variant="primary"
@@ -90,9 +95,26 @@ function SideBar({
         </>
       )}
 
+      {editEnabled && CONFIG.MODE === "map-server" && (
+        <Button
+          variant="primary"
+          className="w-100 mt-3"
+          onClick={() => setShowSelectMapModal(true)}
+        >
+          Select Map
+        </Button>
+      )}
+
       <AddGLBModal
         show={showAddGLBModal}
         onClose={() => setShowAddGLBModal(false)}
+        viewer={viewer}
+        setMapTilesLoaded={setMapTilesLoaded}
+      />
+
+      <SelectMapModal
+        show={showSelectMapModal}
+        onClose={() => setShowSelectMapModal(false)}
         viewer={viewer}
         setMapTilesLoaded={setMapTilesLoaded}
       />

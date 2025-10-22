@@ -3,7 +3,8 @@ import { MapsDiscovery } from "@openflam/dnsspatialdiscovery";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { addTilesetFromMapInfo } from "../utils/cesium/add-tiles";
 
 import CONFIG from "../config";
 import CesiumViewer from "./CesiumViewer";
@@ -16,6 +17,16 @@ function HomePage() {
   const [discoverEnabled, setDiscoverEnabled] = useState(true);
 
   const mapsDiscoveryObj = new MapsDiscovery(CONFIG.DISCOVERY_SUFFIX);
+
+  useEffect(() => {
+    if (viewer && CONFIG.MODE === "map-server") {
+      addTilesetFromMapInfo(
+        viewer,
+        CONFIG.DEFAULT_MAP_SERVER,
+        setMapTilesLoaded,
+      );
+    }
+  }, [viewer]);
 
   const sidebarComponent = viewer ? (
     <SideBar
@@ -36,7 +47,7 @@ function HomePage() {
             setMapTilesLoaded={setMapTilesLoaded}
             onViewerReady={(v) => setViewer(v)}
             mapsDiscoveryObj={mapsDiscoveryObj}
-            discoverEnabled={discoverEnabled}
+            discoverEnabled={CONFIG.MODE === "global" && discoverEnabled}
           />
         </Col>
 

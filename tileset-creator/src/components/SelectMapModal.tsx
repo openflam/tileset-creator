@@ -1,0 +1,105 @@
+import { useEffect, useState } from "react";
+import { Alert, Button, Modal, Spinner } from "react-bootstrap";
+import { Viewer } from "cesium";
+import { addTilesetFromMapInfo } from "../utils/cesium/add-tiles";
+import CONFIG from "../config";
+
+type propsType = {
+  show: boolean;
+  onClose: () => void;
+  viewer: Viewer;
+  setMapTilesLoaded: React.Dispatch<React.SetStateAction<MapTilesLoaded>>;
+};
+
+type Map = {
+  id: number;
+  name: string;
+  description: string;
+  namespace: string;
+  services: {
+    url: string;
+    name: string;
+    credentialsCookiesRequired: boolean;
+  }[];
+  published: boolean;
+  footprint?: number[];
+};
+
+function SelectMapModal({
+  show,
+  onClose,
+  viewer,
+  setMapTilesLoaded,
+}: propsType) {
+  const [maps, setMaps] = useState<Map[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (show) {
+      setLoading(true);
+      setError(null);
+      fetch(CONFIG.API_LIST_MAPS)
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Failed to fetch maps");
+          }
+          return response.json();
+        })
+        .then((data) => {
+          setMaps(data.items);
+          setLoading(false);
+        })
+        .catch((error) => {
+          setError(error.message);
+          setLoading(false);
+        });
+    }
+  }, [show]);
+
+  const handleSelectMap = (map: Map) => {
+    const baseUrl = CONFIG.API_LIST_MAPS.replace("/maps", "");
+    const mapInfo: MapInfo = {
+      name: map.name,
+      commonName: map.name,
+      url: `${baseUrl}${map.services[0].url}`,
+      type: "custom",
+      authenticated: true,
+    };
+    addTilesetFromMapInfo(viewer, mapInfo, setMapTilesLoaded);
+    onClose();
+  };
+
+  return (
+    <Modal show={show} onHide={onClose}>
+      <Modal.Header closeButton>
+        <Modal.Title>Select Map</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        {loading && <Spinner animation="border" />}
+        {error && <Alert variant="danger">{error}</Alert>}
+        {!loading &&
+          !error &&
+          maps.map((map) => (
+            <div key={map.id} className="d-flex justify-content-between">
+              <div>
+                <h5>{map.name}</h5>
+                <p>{map.description}</p>
+              </div>
+              <div>
+                {map.footprint ? (
+                  <Button onClick={() => handleSelectMap(map)}>Select</Button>
+                ) : (
+                  <Button variant="link" onClick={() => handleSelectMap(map)}>
+                    <i className="bi bi-pencil-square"></i>
+                  </Button>
+                )}
+              </div>
+            </div>
+          ))}
+      </Modal.Body>
+    </Modal>
+  );
+}
+
+export default SelectMapModal;

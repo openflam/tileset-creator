@@ -47,7 +47,7 @@ async function createViewer(
 
   // Add a callback to discover new maps when the camera moves.
   const discoverTilesForCurrentView = () => {
-    if (discoverEnabledRef.current === false) {
+    if (CONFIG.MODE === "map-server" || discoverEnabledRef.current === false) {
       return;
     }
     discoverAndAddTiles(
