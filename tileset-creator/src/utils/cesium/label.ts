@@ -1,15 +1,15 @@
 import {
     Viewer, Entity, Cartesian3, Color, VerticalOrigin, HorizontalOrigin,
-    CallbackProperty, ConstantPositionProperty
+    CallbackProperty, ConstantPositionProperty, HeadingPitchRoll, Transforms
 } from 'cesium';
 
-export interface DraggablePinOptions {
+export interface LabelOptions {
     position: Cartesian3;
     text: string;
     viewer: Viewer;
 }
 
-export class DraggablePin {
+export class Label {
     private viewer: Viewer;
     private pinEntity!: Entity;
     private xAxisEntity!: Entity;
@@ -18,7 +18,7 @@ export class DraggablePin {
     private labelEntity!: Entity;
     private startPosition: Cartesian3;
 
-    constructor(options: DraggablePinOptions) {
+    constructor(options: LabelOptions) {
         this.viewer = options.viewer;
         this.startPosition = options.position.clone();
         
@@ -27,19 +27,25 @@ export class DraggablePin {
         // this.setupEventHandlers();
     }
 
-    private createPinEntities(options: DraggablePinOptions) {
+    private createPinEntities(options: LabelOptions) {
         const position = options.position;
         const shortAxisLength = 10; // Very short axis lines in meters
 
-        // Main pin (center point)
+        // Main pin - 3D GLB model
+        const heading = 0;
+        const pitch = 0;
+        const roll = 0;
+        const hpr = new HeadingPitchRoll(heading, pitch, roll);
+        const orientation = Transforms.headingPitchRollQuaternion(position, hpr);
+
         this.pinEntity = this.viewer.entities.add({
             position: position,
-            point: {
-                pixelSize: 8,
-                color: Color.YELLOW,
-                outlineColor: Color.BLACK,
-                outlineWidth: 2,
-                disableDepthTestDistance: Number.POSITIVE_INFINITY,
+            orientation: orientation,
+            model: {
+                uri: '/src/assets/label.glb',
+                minimumPixelSize: 64,
+                maximumScale: 20000,
+                scale: 1.0,
                 heightReference: undefined
             }
         });
@@ -110,7 +116,7 @@ export class DraggablePin {
 
         // Add custom data to identify these entities
         [this.pinEntity, this.xAxisEntity, this.yAxisEntity, this.zAxisEntity, this.labelEntity].forEach(entity => {
-            (entity as any).draggablePin = this;
+            (entity as any).label = this;
         });
     }
 
@@ -119,6 +125,14 @@ export class DraggablePin {
     private updatePosition(newPosition: Cartesian3) {
         this.pinEntity.position = new ConstantPositionProperty(newPosition);
         this.labelEntity.position = new ConstantPositionProperty(newPosition);
+        
+        // Update orientation for the new position
+        const heading = 0;
+        const pitch = 0;
+        const roll = 0;
+        const hpr = new HeadingPitchRoll(heading, pitch, roll);
+        const orientation = Transforms.headingPitchRollQuaternion(newPosition, hpr);
+        (this.pinEntity as any).orientation = orientation;
         
         // The axis lines will update automatically due to CallbackProperty
     }
@@ -148,6 +162,6 @@ export class DraggablePin {
     }
 }
 
-export function createDraggablePin(options: DraggablePinOptions): DraggablePin {
-    return new DraggablePin(options);
+export function createLabel(options: LabelOptions): Label {
+    return new Label(options);
 }

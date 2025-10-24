@@ -1,7 +1,7 @@
 import { Viewer, Cartesian3 } from "cesium";
 import { useState } from "react";
 import { Button, Form } from "react-bootstrap";
-import { createDraggablePin } from "../utils/cesium/draggable-pin";
+import { createLabel } from "../utils/cesium/label";
 import MapInfoAuth from "./map-info/MapInfoAuth";
 import MapInfoDefault from "./map-info/MapInfoDefault";
 import MapInfoCustom from "./map-info/MapInfoCustom";
@@ -153,15 +153,15 @@ function SideBar({
       };
 
       // Create the draggable pin
-      const pin = createDraggablePin({
-        position: Cartesian3.fromDegrees(
-          position.longitude,
-          position.latitude,
-          position.height
-        ),
-        text: labelName,
-        viewer: viewer
-      });
+            const pin = createLabel({
+              position: Cartesian3.fromDegrees(
+                position.longitude,
+                position.latitude,
+                position.height
+              ),
+              text: labelName,
+              viewer: viewer
+            });
 
       // Create the label info with orientation
       const labelInfo: LabelInfo = {

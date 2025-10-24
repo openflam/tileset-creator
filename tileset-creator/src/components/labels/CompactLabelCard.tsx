@@ -31,12 +31,12 @@ const CompactLabelCard: React.FC<CompactLabelCardProps> = ({ label, onDelete, on
     };
 
     const handleIncrement = (field: 'longitude' | 'latitude' | 'height') => {
-        const increment = field === 'height' ? 1 : 0.001;
+        const increment = field === 'height' ? 1 : 0.0001;
         handlePositionUpdate(field, position[field] + increment);
     };
 
     const handleDecrement = (field: 'longitude' | 'latitude' | 'height') => {
-        const decrement = field === 'height' ? 1 : 0.001;
+        const decrement = field === 'height' ? 1 : 0.0001;
         handlePositionUpdate(field, position[field] - decrement);
     };
 
@@ -128,7 +128,7 @@ const CompactLabelCard: React.FC<CompactLabelCardProps> = ({ label, onDelete, on
                             <InputGroup.Text style={{ minWidth: '50px' }}>Lon</InputGroup.Text>
                             <Form.Control
                                 type="number"
-                                step="0.001"
+                                step="0.0001"
                                 value={position.longitude}
                                 onChange={(e) => handlePositionUpdate('longitude', parseFloat(e.target.value) || 0)}
                                 style={{ fontSize: '0.85rem' }}
@@ -156,7 +156,7 @@ const CompactLabelCard: React.FC<CompactLabelCardProps> = ({ label, onDelete, on
                             <InputGroup.Text style={{ minWidth: '50px' }}>Lat</InputGroup.Text>
                             <Form.Control
                                 type="number"
-                                step="0.001"
+                                step="0.0001"
                                 value={position.latitude}
                                 onChange={(e) => handlePositionUpdate('latitude', parseFloat(e.target.value) || 0)}
                                 style={{ fontSize: '0.85rem' }}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, Form, InputGroup, Button, Row, Col } from 'react-bootstrap';
 import { Trash } from 'react-bootstrap-icons';
-import { DraggablePin } from '../utils/cesium/draggable-pin';
+import { Label } from '../utils/cesium/label';
 import { Math as CesiumMath, Cartographic } from 'cesium';
 
 export interface LabelInfo {
@@ -12,7 +12,7 @@ export interface LabelInfo {
         latitude: number;
         height: number;
     };
-    pin: DraggablePin;
+    pin: Label;
     mapUrl?: string; // The map URL this label belongs to
 }
 
