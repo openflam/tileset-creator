@@ -44,6 +44,20 @@ function SideBar({
     setLabels(prevLabels => [...prevLabels, labelInfo]);
   };
 
+  const handleLabelPositionChange = (labelId: string, position: { longitude: number; latitude: number; height: number }) => {
+    setLabels(prevLabels =>
+      prevLabels.map(label => {
+        if (label.id === labelId) {
+          // Update the 3D pin position
+          label.pin.setPosition(position.longitude, position.latitude, position.height);
+          return { ...label, position };
+        }
+        return label;
+      })
+    );
+    console.log(`📍 Updated label position: ${labelId}`, position);
+  };
+
   const handleDeleteLabel = (labelId: string) => {
     setLabels(prevLabels => {
       const labelToDelete = prevLabels.find(label => label.id === labelId);
@@ -67,13 +81,63 @@ function SideBar({
     console.log(`🗑️ Deleted all labels for map: ${mapUrl}`);
   };
 
-  const handleSubmitLabels = (mapUrl: string, mapLabels: LabelInfo[]) => {
+  const handleSubmitLabels = async (mapUrl: string, mapLabels: LabelInfo[]) => {
     console.log('📤 Submit labels for map:', mapUrl);
-    console.log('Labels to submit:', mapLabels.map(label => ({
-      id: label.id,
-      name: label.name,
-      position: label.position
-    })));
+    
+    try {
+      // Load the existing example.json file
+      const response = await fetch('/src/assets/data/example.json');
+      const existingData = await response.json();
+      
+      // Find the highest existing node ID
+      const existingNodes = existingData.elements.filter((el: any) => el.type === 'node');
+      const maxId = Math.max(...existingNodes.map((node: any) => node.id), 1000);
+      
+      // Convert labels to OSM node format
+      const newNodes = mapLabels.map((label, index) => ({
+        type: "node",
+        id: maxId + index + 1,
+        lat: label.position.latitude,
+        lon: label.position.longitude,
+        tags: {
+          indoor: "room",
+          level: "2",
+          ref: label.id,
+          name: label.name,
+          height: label.position.height.toString()
+        }
+      }));
+      
+      // Add new nodes to existing elements
+      const updatedData = {
+        elements: [...existingData.elements, ...newNodes]
+      };
+      
+      console.log('Updated data:', updatedData);
+      
+      // Create JSON file and trigger download
+      const dataStr = JSON.stringify(updatedData, null, 4);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'example.json';
+      
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up the URL object
+      URL.revokeObjectURL(url);
+      
+      // Show success message with instructions
+      alert(`✅ Added ${mapLabels.length} labels to example.json!\n\n📝 Instructions:\n1. The updated example.json has been downloaded\n2. Replace the file in src/assets/data/example.json\n3. The new labels have IDs starting from ${maxId + 1}`);
+      
+    } catch (error) {
+      console.error('Error loading example.json:', error);
+      alert('❌ Error: Could not load example.json file');
+    }
   };
 
   const handleAddLabelFromCamera = (cameraData: CameraViewData, labelName: string, mapUrl: string) => {
@@ -99,11 +163,16 @@ function SideBar({
         viewer: viewer
       });
 
-      // Create the label info
+      // Create the label info with orientation
       const labelInfo: LabelInfo = {
         id: labelId,
         name: labelName,
         position: position,
+        orientation: {
+          heading: cameraData.orientation.heading,
+          pitch: cameraData.orientation.pitch,
+          roll: cameraData.orientation.roll
+        },
         pin: pin,
         mapUrl: mapUrl
       };
@@ -174,8 +243,10 @@ function SideBar({
                 labels={labels}
                 mapUrl={url}
                 onDeleteLabel={handleDeleteLabel}
+                onLabelPositionChange={handleLabelPositionChange}
                 onDeleteAllLabels={handleDeleteAllLabels}
                 onSubmitLabels={handleSubmitLabels}
+                editEnabled={editEnabled}
               />
             );
           })}
@@ -191,8 +262,10 @@ function SideBar({
               labels={labels} 
               mapUrl={url}
               onDeleteLabel={handleDeleteLabel}
+              onLabelPositionChange={handleLabelPositionChange}
               onDeleteAllLabels={handleDeleteAllLabels}
               onSubmitLabels={handleSubmitLabels}
+              editEnabled={editEnabled}
             />
           ))}
       </>

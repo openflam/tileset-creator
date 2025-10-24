@@ -12,11 +12,13 @@ interface PropsType {
   labels?: LabelInfo[];
   mapUrl: string;
   onDeleteLabel?: (labelId: string) => void;
+  onLabelPositionChange?: (labelId: string, position: { longitude: number; latitude: number; height: number }) => void;
   onDeleteAllLabels?: (mapUrl: string) => void;
   onSubmitLabels?: (mapUrl: string, labels: LabelInfo[]) => void;
+  editEnabled?: boolean;
 }
 
-function MapInfoCustom({ mapInfo, onAddLabel, viewer, labels = [], mapUrl, onDeleteLabel, onDeleteAllLabels, onSubmitLabels }: PropsType) {
+function MapInfoCustom({ mapInfo, onAddLabel, viewer, labels = [], mapUrl, onDeleteLabel, onLabelPositionChange, onDeleteAllLabels, onSubmitLabels, editEnabled = false }: PropsType) {
   const model = mapInfo.tile as Cesium.Model;
 
   // Initialize state with the model's transform
@@ -227,7 +229,7 @@ function MapInfoCustom({ mapInfo, onAddLabel, viewer, labels = [], mapUrl, onDel
           </Col>
         </Row>
 
-        {onAddLabel && (
+        {editEnabled && onAddLabel && (
           <Row className="mt-3">
             <Col>
               <Button
@@ -302,7 +304,7 @@ function MapInfoCustom({ mapInfo, onAddLabel, viewer, labels = [], mapUrl, onDel
         )}
 
         {/* Display labels for this map */}
-        {(() => {
+        {editEnabled && (() => {
           const mapLabels = labels.filter(label => label.mapUrl === mapUrl);
           return mapLabels.length > 0 && (
             <>
@@ -312,7 +314,7 @@ function MapInfoCustom({ mapInfo, onAddLabel, viewer, labels = [], mapUrl, onDel
                     Labels ({mapLabels.length})
                   </h6>
                   {mapLabels.map(label => (
-                    <CompactLabelCard key={label.id} label={label} onDelete={onDeleteLabel} />
+                    <CompactLabelCard key={label.id} label={label} onDelete={onDeleteLabel} onPositionChange={onLabelPositionChange} viewer={viewer} />
                   ))}
                 </Col>
               </Row>

@@ -12,6 +12,11 @@ export interface LabelInfo {
         latitude: number;
         height: number;
     };
+    orientation?: {
+        heading: number;
+        pitch: number;
+        roll: number;
+    };
     pin: DraggablePin;
     mapUrl?: string; // The map URL this label belongs to
 }

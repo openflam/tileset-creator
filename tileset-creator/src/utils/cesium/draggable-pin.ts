@@ -1,7 +1,6 @@
 import {
     Viewer, Entity, Cartesian3, Color, VerticalOrigin, HorizontalOrigin,
-    ScreenSpaceEventHandler, ScreenSpaceEventType, defined, 
-    CallbackProperty, Cartographic, Plane, IntersectionTests, ConstantPositionProperty
+    CallbackProperty, ConstantPositionProperty
 } from 'cesium';
 
 export interface DraggablePinOptions {
@@ -17,9 +16,6 @@ export class DraggablePin {
     private yAxisEntity!: Entity;
     private zAxisEntity!: Entity;
     private labelEntity!: Entity;
-    private handler!: ScreenSpaceEventHandler;
-    private isDragging = false;
-    private activeAxis: 'x' | 'y' | 'z' | 'pin' | null = null;
     private startPosition: Cartesian3;
 
     constructor(options: DraggablePinOptions) {
@@ -27,7 +23,8 @@ export class DraggablePin {
         this.startPosition = options.position.clone();
         
         this.createPinEntities(options);
-        this.setupEventHandlers();
+        // Dragging disabled - setupEventHandlers() not called
+        // this.setupEventHandlers();
     }
 
     private createPinEntities(options: DraggablePinOptions) {
@@ -117,88 +114,7 @@ export class DraggablePin {
         });
     }
 
-    private setupEventHandlers() {
-        this.handler = new ScreenSpaceEventHandler(this.viewer.scene.canvas);
-
-        // Mouse down - start dragging
-        this.handler.setInputAction((event: any) => {
-            const pickedObject = this.viewer.scene.pick(event.position);
-            if (defined(pickedObject) && defined(pickedObject.id)) {
-                const entity = pickedObject.id;
-                if ((entity as any).draggablePin === this) {
-                    this.isDragging = true;
-                    this.viewer.scene.screenSpaceCameraController.enableRotate = false;
-                    
-                    // Determine which component was clicked
-                    if (entity === this.xAxisEntity) {
-                        this.activeAxis = 'x';
-                    } else if (entity === this.yAxisEntity) {
-                        this.activeAxis = 'y';
-                    } else if (entity === this.zAxisEntity) {
-                        this.activeAxis = 'z';
-                    } else {
-                        this.activeAxis = 'pin';
-                    }
-                }
-            }
-        }, ScreenSpaceEventType.LEFT_DOWN);
-
-        // Mouse move - drag
-        this.handler.setInputAction((event: any) => {
-            if (this.isDragging && this.activeAxis) {
-                const ray = this.viewer.camera.getPickRay(event.endPosition);
-                if (!ray) return;
-
-                const currentPos = this.pinEntity.position?.getValue(this.viewer.clock.currentTime);
-                if (!currentPos) return;
-
-                let newPosition: Cartesian3;
-
-                if (this.activeAxis === 'pin') {
-                    // Free movement - project to a plane parallel to ground
-                    const plane = new Plane(Cartesian3.UNIT_Z, -currentPos.z);
-                    const intersection = IntersectionTests.rayPlane(ray, plane);
-                    newPosition = intersection || currentPos;
-                } else {
-                    // Constrained axis movement
-                    const cartographic = Cartographic.fromCartesian(currentPos);
-                    const mousePos = this.viewer.camera.pickEllipsoid(event.endPosition);
-                    
-                    if (mousePos) {
-                        const mouseCartographic = Cartographic.fromCartesian(mousePos);
-                        
-                        switch (this.activeAxis) {
-                            case 'x':
-                                cartographic.longitude = mouseCartographic.longitude;
-                                break;
-                            case 'y':
-                                cartographic.latitude = mouseCartographic.latitude;
-                                break;
-                            case 'z':
-                                cartographic.height += (mouseCartographic.height - cartographic.height);
-                                break;
-                        }
-                        
-                        newPosition = Cartographic.toCartesian(cartographic);
-                    } else {
-                        newPosition = currentPos;
-                    }
-                }
-
-                // Update all entity positions
-                this.updatePosition(newPosition);
-            }
-        }, ScreenSpaceEventType.MOUSE_MOVE);
-
-        // Mouse up - stop dragging
-        this.handler.setInputAction(() => {
-            if (this.isDragging) {
-                this.isDragging = false;
-                this.activeAxis = null;
-                this.viewer.scene.screenSpaceCameraController.enableRotate = true;
-            }
-        }, ScreenSpaceEventType.LEFT_UP);
-    }
+    // Position can only be changed via the input fields in the label card
 
     private updatePosition(newPosition: Cartesian3) {
         this.pinEntity.position = new ConstantPositionProperty(newPosition);
@@ -228,7 +144,7 @@ export class DraggablePin {
         this.viewer.entities.remove(this.yAxisEntity);
         this.viewer.entities.remove(this.zAxisEntity);
         this.viewer.entities.remove(this.labelEntity);
-        this.handler.destroy();
+        // handler.destroy() not needed since event handlers are not set up
     }
 }
 
