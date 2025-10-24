@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Form, Alert } from 'react-bootstrap';
 import { Viewer } from 'cesium';
-import { getCurrentCameraView, parseCameraViewData, flyToCameraView } from '../utils/cesium/camera-utils';
+import { getCurrentCameraView, parseCameraViewData, flyToCameraView } from '../../utils/cesium/camera-utils';
 
 interface CameraInfoModalProps {
     show: boolean;

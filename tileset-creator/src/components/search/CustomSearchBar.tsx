@@ -3,11 +3,11 @@ import { Form, Button, Spinner } from 'react-bootstrap';
 import { Search, GeoAlt, X, Globe } from 'react-bootstrap-icons';
 import CombinedSearchService from './CombinedSearchService';
 import type { SearchResult } from './CombinedSearchService';
-import { flyToSearchResult } from '../utils/cesium/customDestinationFound';
-import { flyToCameraView } from '../utils/cesium/camera-utils';
+import { flyToSearchResult } from '../../utils/cesium/customDestinationFound';
+import { flyToCameraView } from '../../utils/cesium/camera-utils';
 import { Viewer, Rectangle, Math as CesiumMath } from 'cesium';
-import '../styles/CustomSearchBar.css';
-import { discoverAndAddTiles } from '../utils/discover-add-tiles';
+import '../../styles/CustomSearchBar.css';
+import { discoverAndAddTiles } from '../../utils/discover-add-tiles';
 
 interface CustomSearchBarProps {
     viewer: Viewer | null;
@@ -251,7 +251,7 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({ viewer, mapsDiscovery
                     flyToCameraView(viewer, cameraView).then(() => {
                         // Reduce Google tileset opacity to 30% to make the special location more visible
                         setTimeout(() => {
-                            setGoogleOpacity(0.3);
+                            setGoogleOpacity(0.1);
                         }, 100);
                     }).catch((err) => {
                         console.error(`Failed to fly to ${locationName}:`, err);

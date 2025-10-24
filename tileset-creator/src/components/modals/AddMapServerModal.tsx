@@ -1,10 +1,10 @@
 import { Viewer } from "cesium";
 import { useState } from "react";
 import { Modal, Button, Form } from "react-bootstrap";
-import { addTilesetFromMapInfo } from "../utils/cesium/add-tiles";
+import { addTilesetFromMapInfo } from "../../utils/cesium/add-tiles";
 import { MapServer } from "@openflam/dnsspatialdiscovery";
 
-import { getFullUrl } from "../utils/openflame/discover";
+import { getFullUrl } from "../../utils/openflame/discover";
 
 type AddMapServerModalProps = {
   show: boolean;

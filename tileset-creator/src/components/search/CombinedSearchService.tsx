@@ -1,5 +1,5 @@
-import NominatimGeocoderService from '../utils/cesium/NominatimGeocoderService';
-import GoogleGeocoderService from '../utils/cesium/GoogleGeocoderService';
+import NominatimGeocoderService from '../../utils/cesium/NominatimGeocoderService';
+import GoogleGeocoderService from '../../utils/cesium/GoogleGeocoderService';
 
 export interface SearchResult {
     displayName: string;

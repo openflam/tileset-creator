@@ -4,10 +4,10 @@ import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import { useState } from "react";
-import type { LabelInfo } from "./LabelCard";
+import type { LabelInfo } from "./labels/LabelCard";
 
 import CONFIG from "../config";
-import CesiumViewer from "./CesiumViewer";
+import CesiumViewer from "./viewer/CesiumViewer";
 import SideBar from "./SideBar";
 
 function HomePage() {

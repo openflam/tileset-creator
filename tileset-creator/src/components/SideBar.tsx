@@ -1,15 +1,15 @@
-import { Viewer, ScreenSpaceEventHandler, ScreenSpaceEventType, Math as CesiumMath, Cartographic, Cartesian3 } from "cesium";
-import { useState, useEffect, useRef } from "react";
+import { Viewer, Cartesian3 } from "cesium";
+import { useState } from "react";
 import { Button, Form } from "react-bootstrap";
 import { createDraggablePin } from "../utils/cesium/draggable-pin";
-import MapInfoAuth from "./MapInfoAuth";
-import MapInfoDefault from "./MapInfoDefault";
-import MapInfoCustom from "./MapInfoCustom";
-import AddGLBModal from "./AddGLBModal";
-import AddMapServerModal from "./AddMapServerModal";
-import AddLabelModal from "./AddLabelModal";
-import CameraInfoModal from "./CameraInfoModal";
-import LabelCard, { type LabelInfo } from "./LabelCard";
+import MapInfoAuth from "./map-info/MapInfoAuth";
+import MapInfoDefault from "./map-info/MapInfoDefault";
+import MapInfoCustom from "./map-info/MapInfoCustom";
+import { type CameraViewData } from "../utils/cesium/camera-utils";
+import AddGLBModal from "./modals/AddGLBModal";
+import AddMapServerModal from "./modals/AddMapServerModal";
+import CameraInfoModal from "./modals/CameraInfoModal";
+import { type LabelInfo } from "./labels/LabelCard";
 
 type propsType = {
   mapTilesLoaded: MapTilesLoaded;
@@ -36,135 +36,93 @@ function SideBar({
 }: propsType) {
   const [showAddGLBModal, setShowAddGLBModal] = useState(false);
   const [showAddMapServerModal, setShowAddMapServerModal] = useState(false);
-  const [showAddLabelModal, setShowAddLabelModal] = useState(false);
   const [showCameraInfoModal, setShowCameraInfoModal] = useState(false);
   const [editEnabled, setEditEnabled] = useState(false);
-  const [isSelectingPosition, setIsSelectingPosition] = useState(false);
-  const [pendingLabelText, setPendingLabelText] = useState('');
-  const positionSelectionHandler = useRef<ScreenSpaceEventHandler | null>(null);
 
-  const handleLabelPositionChange = (id: string, position: { longitude: number; latitude: number; height: number }) => {
-    setLabels(prevLabels => 
-      prevLabels.map(label => {
-        if (label.id === id) {
-          // Update the 3D pin position
-          label.pin.setPosition(position.longitude, position.latitude, position.height);
-          return { ...label, position };
-        }
-        return label;
-      })
-    );
-  };
-
-  const handleLabelDelete = (id: string) => {
-    setLabels(prevLabels => {
-      const labelToDelete = prevLabels.find(label => label.id === id);
-      if (labelToDelete) {
-        // Destroy the 3D pin
-        labelToDelete.pin.destroy();
-      }
-      return prevLabels.filter(label => label.id !== id);
-    });
-  };
 
   const handleLabelCreated = (labelInfo: LabelInfo) => {
     setLabels(prevLabels => [...prevLabels, labelInfo]);
   };
 
-  const handleStartPositionSelection = (labelText: string) => {
-    setPendingLabelText(labelText);
-    setIsSelectingPosition(true);
-    
-    // Change cursor to crosshair to indicate selection mode
-    if (viewer.canvas) {
-      viewer.canvas.style.cursor = 'crosshair';
-    }
-    
-    // Set up click handler for position selection
-    positionSelectionHandler.current = new ScreenSpaceEventHandler(viewer.canvas);
-    positionSelectionHandler.current.setInputAction((event: any) => {
-      // Try to pick the actual terrain/surface position first
-      let pickedPosition: Cartesian3 | undefined = viewer.scene.pickPosition(event.position);
-      
-      // If no 3D position was picked (e.g., clicking on empty space), fall back to ellipsoid
-      if (!pickedPosition) {
-        const ellipsoidPosition = viewer.camera.pickEllipsoid(event.position);
-        if (ellipsoidPosition) {
-          pickedPosition = ellipsoidPosition;
-        }
+  const handleDeleteLabel = (labelId: string) => {
+    setLabels(prevLabels => {
+      const labelToDelete = prevLabels.find(label => label.id === labelId);
+      if (labelToDelete) {
+        labelToDelete.pin.destroy();
       }
-      
-      if (pickedPosition) {
-        // Convert to cartographic coordinates
-        const cartographic = Cartographic.fromCartesian(pickedPosition);
-        const longitude = CesiumMath.toDegrees(cartographic.longitude);
-        const latitude = CesiumMath.toDegrees(cartographic.latitude);
-        
-        // If we picked the actual terrain, add some height above it
-        // If we picked ellipsoid, use a reasonable default height
-        let height = cartographic.height;
-        if (height < 100) {
-          // Likely picked ellipsoid (sea level), use a reasonable height
-          height = 300; // 300m above sea level as default
-        } else {
-          // Picked actual terrain, add 50m above it
-          height += 50;
-        }
-        
-        // Create position with the calculated height
-        const finalPosition = Cartesian3.fromDegrees(longitude, latitude, height);
-        
-        // Create the label at the calculated position
-        const pin = createDraggablePin({
-          position: finalPosition,
-          text: labelText,
-          viewer: viewer
-        });
-
-        const labelInfo: LabelInfo = {
-          id: `label_${Date.now()}`,
-          name: labelText,
-          position: {
-            longitude: parseFloat(longitude.toFixed(6)),
-            latitude: parseFloat(latitude.toFixed(6)),
-            height: Math.round(height)
-          },
-          pin: pin
-        };
-
-        handleLabelCreated(labelInfo);
-        console.log('Label created at clicked position:', labelInfo.position);
-      }
-      
-      // Clean up selection mode
-      handleCancelPositionSelection();
-    }, ScreenSpaceEventType.LEFT_CLICK);
+      return prevLabels.filter(label => label.id !== labelId);
+    });
+    console.log(`🗑️ Deleted label: ${labelId}`);
   };
 
-  const handleCancelPositionSelection = () => {
-    setIsSelectingPosition(false);
-    setPendingLabelText('');
-    
-    // Restore normal cursor
-    if (viewer.canvas) {
-      viewer.canvas.style.cursor = 'default';
-    }
-    
-    // Clean up event handler
-    if (positionSelectionHandler.current) {
-      positionSelectionHandler.current.destroy();
-      positionSelectionHandler.current = null;
+  const handleDeleteAllLabels = (mapUrl: string) => {
+    // Filter out all labels for this map and destroy their pins
+    setLabels(prevLabels => {
+      const labelsToDelete = prevLabels.filter(label => label.mapUrl === mapUrl);
+      labelsToDelete.forEach(label => {
+        label.pin.destroy();
+      });
+      return prevLabels.filter(label => label.mapUrl !== mapUrl);
+    });
+    console.log(`🗑️ Deleted all labels for map: ${mapUrl}`);
+  };
+
+  const handleSubmitLabels = (mapUrl: string, mapLabels: LabelInfo[]) => {
+    console.log('📤 Submit labels for map:', mapUrl);
+    console.log('Labels to submit:', mapLabels.map(label => ({
+      id: label.id,
+      name: label.name,
+      position: label.position
+    })));
+  };
+
+  const handleAddLabelFromCamera = (cameraData: CameraViewData, labelName: string, mapUrl: string) => {
+    try {
+      // Create a unique ID for the label
+      const labelId = `label-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Extract position from camera data
+      const position = {
+        longitude: cameraData.position.longitude,
+        latitude: cameraData.position.latitude,
+        height: cameraData.position.height
+      };
+
+      // Create the draggable pin
+      const pin = createDraggablePin({
+        position: Cartesian3.fromDegrees(
+          position.longitude,
+          position.latitude,
+          position.height
+        ),
+        text: labelName,
+        viewer: viewer
+      });
+
+      // Create the label info
+      const labelInfo: LabelInfo = {
+        id: labelId,
+        name: labelName,
+        position: position,
+        pin: pin,
+        mapUrl: mapUrl
+      };
+
+      // Add to labels list
+      handleLabelCreated(labelInfo);
+      
+      console.log('✅ Label created from camera data:', {
+        name: labelName,
+        position: position,
+        mapUrl: mapUrl,
+        cameraData: cameraData
+      });
+    } catch (error) {
+      console.error('❌ Failed to create label from camera data:', error);
+      alert('Failed to create label. Please try again.');
     }
   };
 
-  // Clean up on unmount
-  useEffect(() => {
-    return () => {
-      if (positionSelectionHandler.current) {
-        positionSelectionHandler.current.destroy();
-      }
-    };
-  }, []);
 
   return (
     <div className="p-3">
@@ -184,20 +142,6 @@ function SideBar({
         />
       </div>
 
-      {/* Position Selection Mode Indicator */}
-      {isSelectingPosition && (
-        <div className="alert alert-warning mb-3" role="alert">
-          <strong>🎯 Click on the map</strong> to place "{pendingLabelText}" label.
-          <Button 
-            variant="outline-secondary" 
-            size="sm" 
-            className="ms-2"
-            onClick={handleCancelPositionSelection}
-          >
-            Cancel
-          </Button>
-        </div>
-      )}
       <>
         {Object.entries(mapTilesLoaded)
           .filter(
@@ -225,6 +169,13 @@ function SideBar({
                 mapInfo={mapInfo}
                 externalOpacity={isGoogle ? googleOpacity : undefined}
                 onOpacityChange={isGoogle ? onGoogleOpacityChange : undefined}
+                onAddLabel={handleAddLabelFromCamera}
+                viewer={viewer}
+                labels={labels}
+                mapUrl={url}
+                onDeleteLabel={handleDeleteLabel}
+                onDeleteAllLabels={handleDeleteAllLabels}
+                onSubmitLabels={handleSubmitLabels}
               />
             );
           })}
@@ -232,25 +183,20 @@ function SideBar({
         {Object.entries(mapTilesLoaded)
           .filter(([_, mapInfo]) => mapInfo.tile && mapInfo.type === "custom")
           .map(([url, mapInfo]) => (
-            <MapInfoCustom key={url} mapInfo={mapInfo} />
+            <MapInfoCustom 
+              key={url} 
+              mapInfo={mapInfo} 
+              onAddLabel={handleAddLabelFromCamera} 
+              viewer={viewer} 
+              labels={labels} 
+              mapUrl={url}
+              onDeleteLabel={handleDeleteLabel}
+              onDeleteAllLabels={handleDeleteAllLabels}
+              onSubmitLabels={handleSubmitLabels}
+            />
           ))}
       </>
 
-      {/* Labels Section */}
-      {labels.length > 0 && (
-        <>
-          <hr className="my-3" />
-          <h6 className="text-muted mb-3">Labels ({labels.length})</h6>
-          {labels.map(label => (
-            <LabelCard
-              key={label.id}
-              label={label}
-              onPositionChange={handleLabelPositionChange}
-              onDelete={handleLabelDelete}
-            />
-          ))}
-        </>
-      )}
 
       {editEnabled && (
         <>
@@ -278,13 +224,6 @@ function SideBar({
             Add Map Server
           </Button>
 
-          <Button
-            variant="success"
-            className="w-100 mt-3"
-            onClick={() => setShowAddLabelModal(true)}
-          >
-            Add Label
-          </Button>
         </>
       )}
 
@@ -308,13 +247,6 @@ function SideBar({
         setMapTilesLoaded={setMapTilesLoaded}
       />
 
-      <AddLabelModal
-        show={showAddLabelModal}
-        onClose={() => setShowAddLabelModal(false)}
-        viewer={viewer}
-        onLabelCreated={handleLabelCreated}
-        onStartPositionSelection={handleStartPositionSelection}
-      />
     </div>
   );
 }

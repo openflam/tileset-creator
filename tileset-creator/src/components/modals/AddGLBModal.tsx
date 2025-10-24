@@ -1,8 +1,8 @@
 import { Viewer } from "cesium";
 import { useState } from "react";
 import { Modal, Button, Form, Alert } from "react-bootstrap";
-import { addTilesetFromMapInfo } from "../utils/cesium/add-tiles";
-import customMapLogo from "../assets/customMap.svg";
+import { addTilesetFromMapInfo } from "../../utils/cesium/add-tiles";
+import customMapLogo from "../../assets/customMap.svg";
 
 type AddGLBModalProps = {
   show: boolean;

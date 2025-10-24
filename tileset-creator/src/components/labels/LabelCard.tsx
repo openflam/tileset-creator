@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, Form, InputGroup, Button, Row, Col } from 'react-bootstrap';
 import { Trash } from 'react-bootstrap-icons';
-import { DraggablePin } from '../utils/cesium/draggable-pin';
+import { DraggablePin } from '../../utils/cesium/draggable-pin';
 import { Math as CesiumMath, Cartographic } from 'cesium';
 
 export interface LabelInfo {
@@ -13,6 +13,7 @@ export interface LabelInfo {
         height: number;
     };
     pin: DraggablePin;
+    mapUrl?: string; // The map URL this label belongs to
 }
 
 interface LabelCardProps {
@@ -42,9 +43,29 @@ const LabelCard: React.FC<LabelCardProps> = ({ label, onPositionChange, onDelete
             };
             setPosition(newPosition);
             onPositionChange(label.id, newPosition);
+            
+            // Show browser notification
+            showSyncNotification();
         } catch (error) {
             console.error('Failed to get current position:', error);
+            // Show error notification
+            showErrorNotification();
         }
+    };
+
+    const showSyncNotification = () => {
+        // Show browser popup window
+        alert(`Label Synced!\n\n"${label.name}" has been synced with the database.`);
+        
+        // Also log for debugging
+        console.log(`✅ Label "${label.name}" synced with database`);
+    };
+
+    const showErrorNotification = () => {
+        // Show browser popup window for error
+        alert(`❌ Sync Failed!\n\nFailed to sync "${label.name}" with the database.`);
+        
+        console.error(`❌ Failed to sync label "${label.name}"`);
     };
 
     return (

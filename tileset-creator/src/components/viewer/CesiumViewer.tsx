@@ -11,9 +11,9 @@ import { useEffect, useRef, useState } from "react";
 import {
   discoverAndAddTiles,
   addDefaultTiles,
-} from "../utils/discover-add-tiles";
-import CustomSearchBar from './CustomSearchBar';
-import CONFIG from "../config";
+} from "../../utils/discover-add-tiles";
+import CustomSearchBar from '../search/CustomSearchBar';
+import CONFIG from "../../config";
 
 async function createViewer(
   viewerDiv: HTMLDivElement,
