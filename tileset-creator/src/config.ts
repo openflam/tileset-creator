@@ -9,7 +9,8 @@ type ConfigType = {
 };
 
 const CONFIG: ConfigType = {
-  DISCOVERY_SUFFIX: "loc.open-flame.com.",
+  DISCOVERY_SUFFIX:
+    import.meta.env.VITE_DISCOVERY_SUFFIX || "loc.open-flame.com.",
   GOOGLE_3D_TILES: {
     name: "Google",
     commonName: "Google",
@@ -29,10 +30,12 @@ const CONFIG: ConfigType = {
     name: "Default Map Server",
     commonName: "Default Map Server",
     type: "custom",
-    url: "http://localhost:8000/default_map", // A placeholder URL
+    url:
+      import.meta.env.VITE_DEFAULT_MAP_SERVER_URL ||
+      "http://localhost:8000/default_map",
     authenticated: true,
   },
-  USE_MOCK_DATA: true,
+  USE_MOCK_DATA: import.meta.env.VITE_USE_MOCK_DATA === "true",
 };
 
 export default CONFIG;
