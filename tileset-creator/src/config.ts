@@ -5,6 +5,7 @@ type ConfigType = {
   MODE: "global" | "map-server";
   API_LIST_MAPS: string;
   DEFAULT_MAP_SERVER: MapInfo;
+  USE_MOCK_DATA: boolean;
 };
 
 const CONFIG: ConfigType = {
@@ -21,8 +22,7 @@ const CONFIG: ConfigType = {
     authenticated: true,
   },
   CESIUM_ION_TOKEN: import.meta.env.VITE_CESIUM_ION_TOKEN as string,
-  // Set the mode directly. Options: "global" or "map-server"
-  MODE: "map-server",
+  MODE: (import.meta.env.VITE_MAP_MODE as "global" | "map-server") || "global",
   API_LIST_MAPS:
     import.meta.env.VITE_API_LIST_MAPS || "http://localhost:8000/maps",
   DEFAULT_MAP_SERVER: {
@@ -32,6 +32,7 @@ const CONFIG: ConfigType = {
     url: "http://localhost:8000/default_map", // A placeholder URL
     authenticated: true,
   },
+  USE_MOCK_DATA: true,
 };
 
 export default CONFIG;
