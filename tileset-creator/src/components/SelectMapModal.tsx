@@ -23,7 +23,6 @@ type Map = {
     credentialsCookiesRequired: boolean;
   }[];
   published: boolean;
-  footprint?: number[];
 };
 
 function SelectMapModal({
@@ -59,7 +58,7 @@ function SelectMapModal({
   }, [show]);
 
   const handleSelectMap = (map: Map) => {
-    const baseUrl = CONFIG.API_LIST_MAPS.replace("/maps", "");
+    const baseUrl = `${CONFIG.API_LIST_MAPS}/${map.namespace}/${map.name}`;
     const mapInfo: MapInfo = {
       name: map.name,
       commonName: map.name,
@@ -85,15 +84,15 @@ function SelectMapModal({
             <div key={map.id} className="d-flex justify-content-between">
               <div>
                 <h5>{map.name}</h5>
-                <p>{map.description}</p>
+                <p className="ms-3">{map.description}</p>
               </div>
               <div>
-                {map.footprint ? (
-                  <Button onClick={() => handleSelectMap(map)}>Select</Button>
-                ) : (
+                {map.published ? (
                   <Button variant="link" onClick={() => handleSelectMap(map)}>
                     <i className="bi bi-pencil-square"></i>
                   </Button>
+                ) : (
+                  <Button onClick={() => handleSelectMap(map)}>Place</Button>
                 )}
               </div>
             </div>
