@@ -2,6 +2,7 @@ import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import cesium from "vite-plugin-cesium";
 import { mockDevServerPlugin } from "vite-plugin-mock-dev-server";
+import basicSsl from "@vitejs/plugin-basic-ssl";
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
@@ -9,17 +10,35 @@ export default defineConfig(({ mode }) => {
   const plugins = [react(), cesium()];
   let server;
 
-  if (
-    mode === "development" &&
-    env.VITE_MAP_MODE === "map-server" &&
-    env.VITE_DEFAULT_MAP_SERVER_URL === ""
-  ) {
-    console.log("*** Proxying to mock dev server ***");
-    plugins.push(mockDevServerPlugin());
+  if (mode === "development" && env.VITE_MAP_MODE === "map-server") {
+    if (env.VITE_DEFAULT_MAP_SERVER === "") {
+      console.log("*** Proxying to mock dev server ***");
+      plugins.push(mockDevServerPlugin());
+    }
+    plugins.push(
+      basicSsl({
+        name: "localdev",
+        domains: ["localhost"],
+        certDir: "./.vite",
+      }),
+    );
     server = {
       proxy: {
-        "^/api": "https://cmu-mapserver.open-flame.com",
-        "^/discovery": "https://cmu-mapserver.open-flame.com",
+        "^/api": {
+          target: "https://cmu-mapserver.open-flame.com",
+          changeOrigin: true,
+          secure: false, // ignore self-signed certs / SSL issues
+        },
+        "^/discover": {
+          target: "https://cmu-mapserver.open-flame.com",
+          changeOrigin: true,
+          secure: false,
+        },
+        "^/capabilities": {
+          target: "https://cmu-mapserver.open-flame.com",
+          changeOrigin: true,
+          secure: false,
+        },
       },
     };
   }
