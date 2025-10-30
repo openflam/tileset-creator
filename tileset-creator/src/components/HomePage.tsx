@@ -24,7 +24,6 @@ function HomePage() {
       AddMapServer(
         CONFIG.DEFAULT_MAP_SERVER || window.location.host,
         viewer,
-        CONFIG.DEFAULT_MAP_SERVER,
         setMapTilesLoaded,
       );
     }
@@ -49,7 +48,7 @@ function HomePage() {
             setMapTilesLoaded={setMapTilesLoaded}
             onViewerReady={(v) => setViewer(v)}
             mapsDiscoveryObj={mapsDiscoveryObj}
-            discoverEnabled={CONFIG.MODE === "global" && discoverEnabled}
+            discoverEnabled={discoverEnabled}
           />
         </Col>
 

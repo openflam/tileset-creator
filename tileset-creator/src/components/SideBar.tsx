@@ -32,15 +32,14 @@ function SideBar({
   return (
     <div className="p-3">
       <div className="d-lg-flex align-items-center mb-3">
-        {CONFIG.MODE === "global" && (
-          <Form.Check
-            type="switch"
-            checked={discoverEnabled}
-            label="Discover"
-            className="me-3"
-            onChange={() => setDiscoverEnabled(!discoverEnabled)}
-          />
-        )}
+        <Form.Check
+          type="switch"
+          checked={discoverEnabled}
+          label="Discover"
+          className="me-3"
+          onChange={() => setDiscoverEnabled(!discoverEnabled)}
+        />
+
         <Form.Check
           type="switch"
           checked={editEnabled}

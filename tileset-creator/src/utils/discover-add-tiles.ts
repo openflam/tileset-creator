@@ -61,10 +61,17 @@ function discoverAndAddTiles(
   // Check if any of the previously discovered maps have been authenticated
   checkAuthenticationDiscovered(mapTilesLoadedRef, setMapTilesLoaded);
 
-  // Disover maps in the current view using DNS.
-  discoverMapsDNS(viewer, mapsDiscoveryObj).then((mapInfos: MapInfo[]) => {
-    addMapInfosToViewer(viewer, mapInfos, mapTilesLoadedRef, setMapTilesLoaded);
-  });
+  // Discover maps in the current view using DNS in global mode, otherwise only default map-server
+  if (CONFIG.MODE === "global") {
+    discoverMapsDNS(viewer, mapsDiscoveryObj).then((mapInfos: MapInfo[]) => {
+      addMapInfosToViewer(
+        viewer,
+        mapInfos,
+        mapTilesLoadedRef,
+        setMapTilesLoaded,
+      );
+    });
+  }
 
   // Query the discovery services in mapInfos that have the discovery service
   discoverMapsServices(viewer, mapTilesLoadedRef).then(
