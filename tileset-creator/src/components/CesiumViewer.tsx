@@ -47,7 +47,7 @@ async function createViewer(
 
   // Add a callback to discover new maps when the camera moves.
   const discoverTilesForCurrentView = () => {
-    if (CONFIG.MODE === "map-server" || discoverEnabledRef.current === false) {
+    if (!discoverEnabledRef.current) {
       return;
     }
     discoverAndAddTiles(
@@ -104,6 +104,9 @@ function CesiumViewer({
 
   useEffect(() => {
     if (viewerRef.current) {
+      if (viewerRef.current.children.length > 0) {
+        return; // Viewer is already created.
+      }
       createViewer(
         viewerRef.current,
         mapsDiscoveryObj,
