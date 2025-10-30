@@ -3,7 +3,6 @@ import { Alert, Button, Modal, Spinner } from "react-bootstrap";
 import { Viewer } from "cesium";
 import { addTilesetFromMapInfo } from "../utils/cesium/add-tiles";
 import CONFIG from "../config";
-import { fetchApi } from "../utils/api";
 
 type propsType = {
   show: boolean;
@@ -39,7 +38,7 @@ function SelectMapModal({
     if (show) {
       setLoading(true);
       setError(null);
-      fetchApi(CONFIG.API_LIST_MAPS)
+      fetch(CONFIG.DEFAULT_MAP_SERVER.url + CONFIG.API_LIST_MAPS)
         .then((response) => {
           if (!response.ok) {
             throw new Error("Failed to fetch maps");

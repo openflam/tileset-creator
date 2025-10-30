@@ -24,15 +24,12 @@ const CONFIG: ConfigType = {
   },
   CESIUM_ION_TOKEN: import.meta.env.VITE_CESIUM_ION_TOKEN as string,
   MODE: (import.meta.env.VITE_MAP_MODE as "global" | "map-server") || "global",
-  API_LIST_MAPS:
-    import.meta.env.VITE_API_LIST_MAPS || "http://localhost:8000/maps",
+  API_LIST_MAPS: import.meta.env.VITE_API_LIST_MAPS || "/api/maps",
   DEFAULT_MAP_SERVER: {
     name: "Default Map Server",
     commonName: "Default Map Server",
     type: "custom",
-    url:
-      import.meta.env.VITE_DEFAULT_MAP_SERVER_URL ||
-      "http://localhost:8000/default_map",
+    url: import.meta.env.VITE_DEFAULT_MAP_SERVER_URL,
     authenticated: true,
   },
   USE_MOCK_DATA: import.meta.env.VITE_USE_MOCK_DATA === "true",
