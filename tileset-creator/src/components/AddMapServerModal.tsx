@@ -1,10 +1,8 @@
 import { Viewer } from "cesium";
 import { useState } from "react";
 import { Modal, Button, Form } from "react-bootstrap";
-import { addTilesetFromMapInfo } from "../utils/cesium/add-tiles";
-import { MapServer } from "@openflam/dnsspatialdiscovery";
 
-import { getFullUrl } from "../utils/openflame/discover";
+import { AddMapServer } from "../utils/openflame/discover";
 
 type AddMapServerModalProps = {
   show: boolean;
@@ -22,40 +20,7 @@ function AddMapServerModal({
   const [mapServerURL, setMapServerURL] = useState("");
 
   const handleSubmit = () => {
-    const mapServer = new MapServer(mapServerURL);
-    mapServer.queryCapabilities().then((_capabilities) => {
-      // If it has a tileserver service, add it to the viewer.
-      const tileService = mapServer.getService("tileserver");
-      if (tileService) {
-        const mapInfo: MapInfo = {
-          commonName: mapServer.capabilities.commonName!,
-          name: mapServer.capabilities.name!,
-          url: getFullUrl(tileService.url, mapServerURL)!,
-          type: "default",
-          key: tileService.key,
-          creditImageUrl: getFullUrl(
-            tileService.creditImageUrl || mapServer.capabilities.iconURL,
-            mapServerURL,
-          ),
-          mapIconUrl: getFullUrl(mapServer.capabilities.iconURL, mapServerURL),
-          credentialsCookiesRequired: true,
-          mapServer: mapServer,
-        };
-        addTilesetFromMapInfo(viewer, mapInfo, setMapTilesLoaded);
-      }
-
-      // If it has a discovery service, add it to the list of discoveryServices.
-      const discoveryService = mapServer.getService("discovery");
-      if (discoveryService) {
-        alert("Discovery service found. It will be used for map discovery.");
-      }
-
-      if (!tileService && !discoveryService) {
-        alert(
-          "No valid tileserver or discovery service found in the provided URL.",
-        );
-      }
-    });
+    AddMapServer(mapServerURL, viewer, setMapTilesLoaded);
     onClose();
   };
 

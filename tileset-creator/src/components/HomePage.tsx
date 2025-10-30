@@ -4,11 +4,11 @@ import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import { useEffect, useState } from "react";
-import { addTilesetFromMapInfo } from "../utils/cesium/add-tiles";
 
 import CONFIG from "../config";
 import CesiumViewer from "./CesiumViewer";
 import SideBar from "./SideBar";
+import { AddMapServer } from "../utils/openflame/discover.ts";
 
 function HomePage() {
   // The mapTilesLoaded state is used to keep track of the loaded map tiles.
@@ -20,7 +20,9 @@ function HomePage() {
 
   useEffect(() => {
     if (viewer && CONFIG.MODE === "map-server") {
-      addTilesetFromMapInfo(
+      console.log("Adding default map server:", CONFIG.DEFAULT_MAP_SERVER);
+      AddMapServer(
+        CONFIG.DEFAULT_MAP_SERVER || window.location.host,
         viewer,
         CONFIG.DEFAULT_MAP_SERVER,
         setMapTilesLoaded,
