@@ -4,6 +4,7 @@ type ConfigType = {
   CESIUM_ION_TOKEN: string;
   MODE: "global" | "map-server";
   API_LIST_MAPS: string;
+  MAPS_SERVICES_BASE: string
   DEFAULT_MAP_SERVER: string;
 };
 
@@ -24,6 +25,7 @@ const CONFIG: ConfigType = {
   CESIUM_ION_TOKEN: import.meta.env.VITE_CESIUM_ION_TOKEN as string,
   MODE: (import.meta.env.VITE_MAP_MODE as "global" | "map-server") || "global",
   API_LIST_MAPS: import.meta.env.VITE_API_LIST_MAPS || "/api/maps",
+  MAPS_SERVICES_BASE: import.meta.env.VITE_MAPS_SERVICES_BASE || "/maps",
   DEFAULT_MAP_SERVER: import.meta.env.VITE_DEFAULT_MAP_SERVER || "",
 };
 
