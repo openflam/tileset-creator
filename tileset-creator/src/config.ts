@@ -4,7 +4,7 @@ type ConfigType = {
   CESIUM_ION_TOKEN: string;
   MODE: "global" | "map-server";
   API_LIST_MAPS: string;
-  MAPS_SERVICES_BASE: string
+  MAPS_SERVICES_BASE: string;
   DEFAULT_MAP_SERVER: string;
 };
 

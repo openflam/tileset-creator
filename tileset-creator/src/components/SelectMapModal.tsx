@@ -3,6 +3,7 @@ import { Alert, Button, Modal, Spinner } from "react-bootstrap";
 import { Viewer } from "cesium";
 import { addTilesetFromMapInfo } from "../utils/cesium/add-tiles";
 import CONFIG from "../config";
+import { getFullUrl } from "../utils/openflame/discover.ts";
 
 type propsType = {
   show: boolean;
@@ -57,13 +58,13 @@ function SelectMapModal({
   }, [show]);
 
   const handleSelectMap = (map: Map) => {
-    const baseUrl = `${CONFIG.MAPS_SERVICES_BASE}/${map.namespace}/${map.name}`;
+    const mapURL = `${CONFIG.DEFAULT_MAP_SERVER}/${CONFIG.MAPS_SERVICES_BASE}/${map.namespace}/${map.name}`;
     const mapInfo: MapInfo = {
       name: map.name,
       commonName: map.name,
-      url: `${baseUrl}${map.services[0].url}`,
-      type: "custom",
-      authenticated: true,
+      url: getFullUrl("/tileset", mapURL)!,
+      type: "default",
+      credentialsCookiesRequired: true,
     };
     addTilesetFromMapInfo(viewer, mapInfo, setMapTilesLoaded);
     onClose();
