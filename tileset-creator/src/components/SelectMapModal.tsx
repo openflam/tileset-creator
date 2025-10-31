@@ -58,7 +58,7 @@ function SelectMapModal({
   }, [show]);
 
   const handleSelectMap = (map: Map) => {
-    const mapURL = `${CONFIG.DEFAULT_MAP_SERVER}/${CONFIG.MAPS_SERVICES_BASE}/${map.namespace}/${map.name}`;
+    const mapURL = `${CONFIG.DEFAULT_MAP_SERVER}${CONFIG.MAPS_SERVICES_BASE}/${map.namespace}/${map.name}`;
     const mapInfo: MapInfo = {
       name: map.name,
       commonName: map.name,
