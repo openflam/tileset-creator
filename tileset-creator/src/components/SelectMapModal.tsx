@@ -39,7 +39,7 @@ function SelectMapModal({
     if (show) {
       setLoading(true);
       setError(null);
-      fetch(CONFIG.DEFAULT_MAP_SERVER + CONFIG.API_LIST_MAPS)
+      fetch(getFullUrl(CONFIG.API_LIST_MAPS, CONFIG.DEFAULT_MAP_SERVER)!)
         .then((response) => {
           if (!response.ok) {
             throw new Error("Failed to fetch maps");
