@@ -28,6 +28,7 @@ function SideBar({
   const [showAddMapServerModal, setShowAddMapServerModal] = useState(false);
   const [showSelectMapModal, setShowSelectMapModal] = useState(false);
   const [editEnabled, setEditEnabled] = useState(false);
+  const [editingMap, setEditingMap] = useState<MapInfo | null>(null);
 
   return (
     <div className="p-3">
@@ -65,14 +66,22 @@ function SideBar({
               mapInfo.authenticated,
           )
           .map(([url, mapInfo]) => (
-            <MapInfoDefault key={url} mapInfo={mapInfo} />
+            <MapInfoDefault
+              key={url}
+              mapInfo={mapInfo}
+              setEditingMap={setEditingMap}
+            />
           ))}
 
-        {Object.entries(mapTilesLoaded)
-          .filter(([_, mapInfo]) => mapInfo.tile && mapInfo.type === "custom")
-          .map(([url, mapInfo]) => (
-            <MapInfoCustom key={url} mapInfo={mapInfo} />
-          ))}
+        {CONFIG.MODE === "global" &&
+          Object.entries(mapTilesLoaded)
+            .filter(([_, mapInfo]) => mapInfo.tile && mapInfo.type === "custom")
+            .map(([url, mapInfo]) => (
+              <MapInfoCustom key={url} mapInfo={mapInfo} />
+            ))}
+        {CONFIG.MODE === "map-server" && editingMap && (
+          <MapInfoCustom key={editingMap.url} mapInfo={editingMap} />
+        )}
       </>
       {editEnabled && CONFIG.MODE === "global" && (
         <>
@@ -100,7 +109,7 @@ function SideBar({
           className="w-100 mt-3"
           onClick={() => setShowSelectMapModal(true)}
         >
-          Select Map
+          Place Unpublished Map
         </Button>
       )}
 
