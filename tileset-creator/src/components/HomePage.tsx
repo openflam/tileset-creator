@@ -1,4 +1,4 @@
-import { Viewer } from "cesium";
+import { TrustedServers, Viewer } from "cesium";
 import { MapsDiscovery } from "@openflam/dnsspatialdiscovery";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
@@ -26,6 +26,7 @@ function HomePage() {
         viewer,
         setMapTilesLoaded,
       );
+      TrustedServers.add(CONFIG.DEFAULT_MAP_SERVER, 443);
     }
   }, [viewer]);
 
