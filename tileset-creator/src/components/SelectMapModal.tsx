@@ -39,7 +39,12 @@ function SelectMapModal({
     if (show) {
       setLoading(true);
       setError(null);
-      fetch(getFullUrl(CONFIG.API_LIST_MAPS, CONFIG.DEFAULT_MAP_SERVER)!)
+      fetch(
+        getFullUrl(
+          `${CONFIG.API_LIST_MAPS}?published=false`,
+          CONFIG.DEFAULT_MAP_SERVER,
+        )!,
+      )
         .then((response) => {
           if (!response.ok) {
             throw new Error("Failed to fetch maps");
@@ -65,6 +70,7 @@ function SelectMapModal({
       url: getFullUrl("/tileset", mapURL)!,
       type: "default",
       credentialsCookiesRequired: true,
+      authenticated: true,
     };
     addTilesetFromMapInfo(viewer, mapInfo, setMapTilesLoaded);
     onClose();
@@ -87,13 +93,7 @@ function SelectMapModal({
                 <p className="ms-3">{map.description}</p>
               </div>
               <div>
-                {map.published ? (
-                  <Button variant="link" onClick={() => handleSelectMap(map)}>
-                    <i className="bi bi-pencil-square"></i>
-                  </Button>
-                ) : (
-                  <Button onClick={() => handleSelectMap(map)}>Place</Button>
-                )}
+                <Button onClick={() => handleSelectMap(map)}>Place</Button>
               </div>
             </div>
           ))}
