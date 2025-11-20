@@ -10,6 +10,7 @@ type propsType = {
   onClose: () => void;
   viewer: Viewer;
   setMapTilesLoaded: React.Dispatch<React.SetStateAction<MapTilesLoaded>>;
+  setEditingMap?: React.Dispatch<React.SetStateAction<MapInfo | null>>;
 };
 
 type Map = {
@@ -30,6 +31,7 @@ function SelectMapModal({
   onClose,
   viewer,
   setMapTilesLoaded,
+  setEditingMap,
 }: propsType) {
   const [maps, setMaps] = useState<Map[]>([]);
   const [loading, setLoading] = useState(false);
@@ -62,17 +64,21 @@ function SelectMapModal({
     }
   }, [show]);
 
-  const handleSelectMap = (map: Map) => {
+  const handleSelectMap = async (map: Map) => {
     const mapURL = `${CONFIG.DEFAULT_MAP_SERVER}${CONFIG.MAPS_SERVICES_BASE}/${map.namespace}/${map.name}`;
     const mapInfo: MapInfo = {
       name: map.name,
       commonName: map.name,
       url: getFullUrl("/tileset", mapURL)!,
       type: "default",
+      placement: "unplaced",
       credentialsCookiesRequired: true,
       authenticated: true,
     };
-    addTilesetFromMapInfo(viewer, mapInfo, setMapTilesLoaded);
+    await addTilesetFromMapInfo(viewer, mapInfo, setMapTilesLoaded);
+    if (setEditingMap) {
+      setEditingMap(mapInfo);
+    }
     onClose();
   };
 

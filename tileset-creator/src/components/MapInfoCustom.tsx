@@ -1,13 +1,14 @@
-import { Card, Row, Col, Image, Form, Button } from "react-bootstrap";
-import { useEffect, useState } from "react";
+import { Card, Row, Col, Image, Form } from "react-bootstrap";
+import { useEffect, useState, useMemo } from "react";
 import * as Cesium from "cesium";
+import { computeTransformFromCartographicPositionAndRotationDegrees } from "../utils/cesium/transforms";
 
 interface PropsType {
   mapInfo: MapInfo;
 }
 
 function MapInfoCustom({ mapInfo }: PropsType) {
-  const model = mapInfo.tile as Cesium.Model;
+  const model = mapInfo.tile as Cesium.Model | Cesium.Cesium3DTileset;
 
   // Initialize state with the model's transform
   const [params, setParams] = useState(() => {
@@ -25,35 +26,28 @@ function MapInfoCustom({ mapInfo }: PropsType) {
       scale: 1,
     };
   });
-  const [commandCopied, setCommandCopied] = useState(false);
+  // Remove unused state
+  // const [commandCopied, setCommandCopied] = useState(false);
 
   // Update modelMatrix whenever params change
   useEffect(() => {
-    const position = Cesium.Cartesian3.fromDegrees(
-      params.longitude,
-      params.latitude,
-      params.altitude,
-    );
-    const hpr = new Cesium.HeadingPitchRoll(
-      Cesium.Math.toRadians(params.heading),
-      Cesium.Math.toRadians(params.pitch),
-      Cesium.Math.toRadians(params.roll),
-    );
-    const orientation = Cesium.Transforms.headingPitchRollQuaternion(
-      position,
-      hpr,
-    );
-    const scale = new Cesium.Cartesian3(
-      params.scale,
-      params.scale,
-      params.scale,
-    );
-    model.modelMatrix = Cesium.Matrix4.fromTranslationQuaternionRotationScale(
-      position,
-      orientation,
-      scale,
-    );
+    const transformArray =
+      computeTransformFromCartographicPositionAndRotationDegrees(
+        [params.longitude, params.latitude, params.altitude],
+        [params.heading, params.pitch, params.roll],
+        params.scale,
+      );
+    model.modelMatrix = Cesium.Matrix4.fromArray(transformArray);
   }, [params, model]);
+
+  // Compute the transform matrix array
+  const transformArray = useMemo(() => {
+    return computeTransformFromCartographicPositionAndRotationDegrees(
+      [params.longitude, params.latitude, params.altitude],
+      [params.heading, params.pitch, params.roll],
+      1.0, // Scale is 1.0 for the displayed matrix as per original logic/request
+    );
+  }, [params]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLElement>,
@@ -135,31 +129,18 @@ function MapInfoCustom({ mapInfo }: PropsType) {
 
         <Row className="mt-4">
           <Col>
-            <Button
-              variant="primary"
-              type="button"
-              onClick={() => {
-                // Create the command string.
-                // The heading is adjusted by -90 degrees. Not sure why, but it seems to
-                // be necessary to align the model correctly.
-                const command =
-                  "npx 3d-tiles-tools createTilesetJson " +
-                  "-i mesh.glb " +
-                  "-o tileset.json " +
-                  "--cartographicPositionDegrees " +
-                  `${params.longitude} ${params.latitude} ${params.altitude} ` +
-                  "--rotationDegrees " +
-                  `${params.heading - 90} ${params.pitch} ${params.roll}`;
-                navigator.clipboard.writeText(command);
-                setCommandCopied(true);
-                setTimeout(() => setCommandCopied(false), 2000); // hide after 2 seconds
+            <h5 className="mt-2">Transform Matrix</h5>
+            <pre
+              style={{
+                backgroundColor: "#f8f9fa",
+                padding: "10px",
+                borderRadius: "4px",
+                fontSize: "0.85rem",
+                overflowX: "auto",
               }}
             >
-              Copy Tileset Command
-            </Button>
-            {commandCopied && (
-              <small className="text-success ms-3">Copied!</small>
-            )}
+              {JSON.stringify(transformArray, null, 2)}
+            </pre>
           </Col>
         </Row>
       </Card.Body>

@@ -6,6 +6,7 @@ declare global {
     commonName: string; // "Common name" borrowed from MapServer
     name: string; // "Map name" borrowed from MapServer
     type: "default" | "custom";
+    placement?: "placed" | "unplaced";
 
     // Tileset URL
     url?: string;

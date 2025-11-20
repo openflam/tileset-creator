@@ -63,7 +63,8 @@ function SideBar({
             ([_, mapInfo]) =>
               mapInfo.tile &&
               mapInfo.type === "default" &&
-              mapInfo.authenticated,
+              mapInfo.authenticated &&
+              mapInfo.placement !== "unplaced",
           )
           .map(([url, mapInfo]) => (
             <MapInfoDefault
@@ -79,6 +80,7 @@ function SideBar({
             .map(([url, mapInfo]) => (
               <MapInfoCustom key={url} mapInfo={mapInfo} />
             ))}
+
         {CONFIG.MODE === "map-server" && editingMap && (
           <MapInfoCustom key={editingMap.url} mapInfo={editingMap} />
         )}
@@ -109,7 +111,7 @@ function SideBar({
           className="w-100 mt-3"
           onClick={() => setShowSelectMapModal(true)}
         >
-          Place Unpublished Map
+          List Unpublished Maps
         </Button>
       )}
 
@@ -125,6 +127,7 @@ function SideBar({
         onClose={() => setShowSelectMapModal(false)}
         viewer={viewer}
         setMapTilesLoaded={setMapTilesLoaded}
+        setEditingMap={setEditingMap}
       />
 
       <AddMapServerModal
