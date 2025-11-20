@@ -98,21 +98,7 @@ function MapInfoCustom({ mapInfo }: PropsType) {
     setSaveStatus(null);
 
     try {
-      // 1. Fetch current tileset JSON
-      const response = await fetch(mapInfo.url);
-      if (!response.ok) {
-        throw new Error("Failed to fetch original tileset JSON.");
-      }
-      const tilesetJson = await response.json();
-
-      // 2. Update transform in root
-      if (!tilesetJson.root) {
-        throw new Error("Invalid tileset JSON: missing root.");
-      }
-      tilesetJson.root.transform = transformArray;
-
-      // 3. PUT updated JSON
-      const updateUrl = `${CONFIG.API_LIST_MAPS}/${mapInfo.id}/tileset`;
+      const updateUrl = `${CONFIG.API_LIST_MAPS}/${mapInfo.id}/tileset/transform`;
       const csrftoken = getCookie("csrftoken");
 
       const headers: HeadersInit = {
@@ -127,14 +113,14 @@ function MapInfoCustom({ mapInfo }: PropsType) {
         method: "PUT",
         headers: headers,
         credentials: "include",
-        body: JSON.stringify(tilesetJson),
+        body: JSON.stringify(transformArray),
       });
 
       if (!putResponse.ok) {
-        throw new Error(`Failed to save tileset: ${putResponse.statusText}`);
+        throw new Error(`Failed to save tileset transform: ${putResponse.statusText}`);
       }
 
-      setSaveStatus({ type: "success", message: "Tileset saved successfully!" });
+      setSaveStatus({ type: "success", message: "Tileset transform saved successfully!" });
     } catch (error: any) {
       setSaveStatus({
         type: "danger",
