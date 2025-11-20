@@ -14,7 +14,9 @@ function HomePage() {
   // The mapTilesLoaded state is used to keep track of the loaded map tiles.
   const [mapTilesLoaded, setMapTilesLoaded] = useState<MapTilesLoaded>({});
   const [viewer, setViewer] = useState<Viewer | null>(null);
-  const [discoverEnabled, setDiscoverEnabled] = useState(true);
+  const [discoverEnabled, setDiscoverEnabled] = useState(
+    CONFIG.MODE !== "map-server",
+  );
 
   const mapsDiscoveryObj = new MapsDiscovery(CONFIG.DISCOVERY_SUFFIX);
 

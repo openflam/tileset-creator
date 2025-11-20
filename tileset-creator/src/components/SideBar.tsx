@@ -27,7 +27,7 @@ function SideBar({
   const [showAddGLBModal, setShowAddGLBModal] = useState(false);
   const [showAddMapServerModal, setShowAddMapServerModal] = useState(false);
   const [showSelectMapModal, setShowSelectMapModal] = useState(false);
-  const [editEnabled, setEditEnabled] = useState(false);
+  const [editEnabled, setEditEnabled] = useState(CONFIG.MODE === "map-server");
   const [editingMap, setEditingMap] = useState<MapInfo | null>(null);
 
   return (

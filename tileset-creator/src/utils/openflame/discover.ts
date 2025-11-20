@@ -211,11 +211,13 @@ function AddMapServer(
   setMapTilesLoaded: React.Dispatch<React.SetStateAction<MapTilesLoaded>>,
 ) {
   const mapServer = new MapServer(mapServerURL);
-  mapServer.queryCapabilities().then(() => {
+  mapServer.queryCapabilities().then(async () => {
     // If it has a tileserver service, add it to the viewer.
     console.log(mapServer);
     const tileService = mapServer.getService("tileserver");
     if (tileService) {
+      const authenticated = await checkAuthentication(mapServer);
+
       const mapInfo: MapInfo = {
         commonName: mapServer.capabilities.commonName!,
         name: mapServer.capabilities.name!,
@@ -229,6 +231,7 @@ function AddMapServer(
         mapIconUrl: getFullUrl(mapServer.capabilities.iconURL, mapServerURL),
         credentialsCookiesRequired: true,
         mapServer: mapServer,
+        authenticated: authenticated,
       };
       addTilesetFromMapInfo(viewer, mapInfo, setMapTilesLoaded);
     }
