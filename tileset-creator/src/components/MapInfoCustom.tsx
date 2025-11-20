@@ -3,6 +3,7 @@ import { useEffect, useState, useMemo } from "react";
 import * as Cesium from "cesium";
 import { computeTransformFromCartographicPositionAndRotationDegrees } from "../utils/cesium/transforms";
 import CONFIG from "../config";
+import { getCookie } from "../utils/cookie";
 
 interface PropsType {
   mapInfo: MapInfo;
@@ -112,15 +113,20 @@ function MapInfoCustom({ mapInfo }: PropsType) {
 
       // 3. PUT updated JSON
       const updateUrl = `${CONFIG.API_LIST_MAPS}/${mapInfo.id}/tileset`;
-      // Note: CONFIG.API_LIST_MAPS might be relative, e.g. "/api/maps"
-      // If running in map-server mode, we might need to prepend host if not proxied?
-      // But assuming the app is served from same origin or proxy is set up.
+      const csrftoken = getCookie("csrftoken");
+
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
+
+      if (csrftoken) {
+        headers["X-CSRFToken"] = csrftoken;
+      }
 
       const putResponse = await fetch(updateUrl, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: headers,
+        credentials: "include",
         body: JSON.stringify(tilesetJson),
       });
 
