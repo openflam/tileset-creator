@@ -1,7 +1,8 @@
-import { Card, Row, Col, Image, Form } from "react-bootstrap";
+import { Card, Row, Col, Image, Form, Button, Alert } from "react-bootstrap";
 import { useEffect, useState, useMemo } from "react";
 import * as Cesium from "cesium";
 import { computeTransformFromCartographicPositionAndRotationDegrees } from "../utils/cesium/transforms";
+import CONFIG from "../config";
 
 interface PropsType {
   mapInfo: MapInfo;
@@ -26,8 +27,13 @@ function MapInfoCustom({ mapInfo }: PropsType) {
       scale: 1,
     };
   });
-  // Remove unused state
-  // const [commandCopied, setCommandCopied] = useState(false);
+  const [commandCopied, setCommandCopied] = useState(false);
+  const [showTransform, setShowTransform] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<{
+    type: "success" | "danger";
+    message: string;
+  } | null>(null);
 
   // Update modelMatrix whenever params change
   useEffect(() => {
@@ -81,6 +87,62 @@ function MapInfoCustom({ mapInfo }: PropsType) {
     );
   };
 
+  const handleSaveTileset = async () => {
+    if (!mapInfo.id || !mapInfo.url) {
+      setSaveStatus({ type: "danger", message: "Missing map ID or URL." });
+      return;
+    }
+
+    setSaving(true);
+    setSaveStatus(null);
+
+    try {
+      // 1. Fetch current tileset JSON
+      const response = await fetch(mapInfo.url);
+      if (!response.ok) {
+        throw new Error("Failed to fetch original tileset JSON.");
+      }
+      const tilesetJson = await response.json();
+
+      // 2. Update transform in root
+      if (!tilesetJson.root) {
+        throw new Error("Invalid tileset JSON: missing root.");
+      }
+      tilesetJson.root.transform = transformArray;
+
+      // 3. PUT updated JSON
+      const updateUrl = `${CONFIG.API_LIST_MAPS}/${mapInfo.id}/tileset`;
+      // Note: CONFIG.API_LIST_MAPS might be relative, e.g. "/api/maps"
+      // If running in map-server mode, we might need to prepend host if not proxied?
+      // But assuming the app is served from same origin or proxy is set up.
+
+      const putResponse = await fetch(updateUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(tilesetJson),
+      });
+
+      if (!putResponse.ok) {
+        throw new Error(`Failed to save tileset: ${putResponse.statusText}`);
+      }
+
+      setSaveStatus({ type: "success", message: "Tileset saved successfully!" });
+    } catch (error: any) {
+      setSaveStatus({
+        type: "danger",
+        message: error.message || "Unknown error occurred.",
+      });
+    } finally {
+      setSaving(false);
+      // Clear success message after a few seconds
+      setTimeout(() => {
+        setSaveStatus((prev) => (prev?.type === "success" ? null : prev));
+      }, 3000);
+    }
+  };
+
   return (
     <Card className="w-100 mb-3">
       <Card.Body>
@@ -129,18 +191,72 @@ function MapInfoCustom({ mapInfo }: PropsType) {
 
         <Row className="mt-4">
           <Col>
-            <h5 className="mt-2">Transform Matrix</h5>
-            <pre
-              style={{
-                backgroundColor: "#f8f9fa",
-                padding: "10px",
-                borderRadius: "4px",
-                fontSize: "0.85rem",
-                overflowX: "auto",
-              }}
-            >
-              {JSON.stringify(transformArray, null, 2)}
-            </pre>
+            {mapInfo.type === "default" ? (
+              <>
+                <Button
+                  variant="primary"
+                  onClick={handleSaveTileset}
+                  disabled={saving}
+                  className="mb-3 w-100"
+                >
+                  {saving ? "Saving..." : "Save Tileset Transform"}
+                </Button>
+
+                {saveStatus && (
+                  <Alert variant={saveStatus.type}>{saveStatus.message}</Alert>
+                )}
+
+                <div
+                  style={{ cursor: "pointer", userSelect: "none" }}
+                  onClick={() => setShowTransform(!showTransform)}
+                >
+                  <h5 className="mt-2 d-flex justify-content-between align-items-center">
+                    Transform Matrix
+                    <i
+                      className={`bi bi-chevron-${showTransform ? "up" : "down"}`}
+                    ></i>
+                  </h5>
+                </div>
+                {showTransform && (
+                  <pre
+                    style={{
+                      backgroundColor: "#f8f9fa",
+                      padding: "10px",
+                      borderRadius: "4px",
+                      fontSize: "0.85rem",
+                      overflowX: "auto",
+                    }}
+                  >
+                    {JSON.stringify(transformArray, null, 2)}
+                  </pre>
+                )}
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="primary"
+                  type="button"
+                  onClick={() => {
+                    const command =
+                      "npx 3d-tiles-tools createTilesetJson " +
+                      "-i mesh.glb " +
+                      "-o tileset.json " +
+                      "--cartographicPositionDegrees " +
+                      `${params.longitude} ${params.latitude} ${params.altitude} ` +
+                      "--rotationDegrees " +
+                      `${params.heading - 90} ${params.pitch} ${params.roll}`;
+                    navigator.clipboard.writeText(command);
+                    setCommandCopied(true);
+                    setTimeout(() => setCommandCopied(false), 2000);
+                  }}
+                >
+                  Copy Tileset Command
+                </Button>
+                {commandCopied && (
+                  <small className="text-success ms-3">Copied!</small>
+                )}
+              </>
+            )}
           </Col>
         </Row>
       </Card.Body>

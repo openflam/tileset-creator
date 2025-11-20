@@ -67,6 +67,7 @@ function SelectMapModal({
   const handleSelectMap = async (map: Map) => {
     const mapURL = `${CONFIG.DEFAULT_MAP_SERVER}${CONFIG.MAPS_SERVICES_BASE}/${map.namespace}/${map.name}`;
     const mapInfo: MapInfo = {
+      id: map.id,
       name: map.name,
       commonName: map.name,
       url: getFullUrl("/tileset", mapURL)!,

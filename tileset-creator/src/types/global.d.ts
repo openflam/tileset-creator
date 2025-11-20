@@ -3,6 +3,7 @@ import { Cesium3DTileset, Model as CesiumModel } from "cesium";
 declare global {
   // Type returned by the discoverMaps function
   type MapInfo = {
+    id?: number; // Map ID from the API
     commonName: string; // "Common name" borrowed from MapServer
     name: string; // "Map name" borrowed from MapServer
     type: "default" | "custom";
