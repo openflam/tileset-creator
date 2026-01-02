@@ -55,7 +55,7 @@ function MapInfoDefault({ mapInfo, setEditingMap }: PropsType) {
             }}
             className="mb-3"
           />
-          {CONFIG.MODE === "map-server" && (
+          {CONFIG.MODE === "map-server" && !mapInfo.key && (
             <Button
               variant="primary"
               onClick={setEditingMap ? () => setEditingMap(mapInfo) : undefined}
