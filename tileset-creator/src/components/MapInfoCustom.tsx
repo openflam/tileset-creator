@@ -1,7 +1,7 @@
 import { Card, Row, Col, Image, Form, Button, Alert } from "react-bootstrap";
 import { useEffect, useState, useMemo } from "react";
 import * as Cesium from "cesium";
-import { computeTransformFromCartographicPositionAndRotationDegrees } from "../utils/cesium/transforms";
+import { computeTransformFromCartographicPositionAndRotationDegrees, computeParametersFromTransform } from "../utils/cesium/transforms";
 import { getPositionInFrontOfCamera } from "../utils/cesium/camera-view";
 import CONFIG from "../config";
 import { getCookie } from "../utils/cookie";
@@ -14,7 +14,7 @@ interface PropsType {
 function MapInfoCustom({ mapInfo, viewer }: PropsType) {
   const model = mapInfo.tile as Cesium.Model | Cesium.Cesium3DTileset;
 
-  // Initialize state with the model's transform, or camera position if identity matrix
+  // Initialize state with the model's transform, or camera position if identity/invalid
   const [params, setParams] = useState(() => {
     let initialMatrix = model.modelMatrix.clone();
 
@@ -25,8 +25,12 @@ function MapInfoCustom({ mapInfo, viewer }: PropsType) {
         }
     }
 
-    // Check if the matrix is identity (no transform set) - fall back to camera position
-    if (Cesium.Matrix4.equals(initialMatrix, Cesium.Matrix4.IDENTITY)) {
+    const pos = Cesium.Matrix4.getTranslation(initialMatrix, new Cesium.Cartesian3());
+    const cartographic = Cesium.Ellipsoid.WGS84.cartesianToCartographic(pos);
+
+    // If we can't get a valid cartographic position (e.g. matrix is identity/at center of earth),
+    // fall back to placing in front of camera
+    if (!cartographic) {
       // Use camera position utility (same as addUnplacedDefaultMapTiles)
       const { latitude, longitude, altitude } = getPositionInFrontOfCamera(viewer, 10.0);
 
@@ -41,18 +45,8 @@ function MapInfoCustom({ mapInfo, viewer }: PropsType) {
       };
     }
 
-    const pos = Cesium.Matrix4.getTranslation(initialMatrix, new Cesium.Cartesian3());
-    const cartographic = Cesium.Ellipsoid.WGS84.cartesianToCartographic(pos);
-
-    return {
-      latitude: Cesium.Math.toDegrees(cartographic.latitude),
-      longitude: Cesium.Math.toDegrees(cartographic.longitude),
-      altitude: cartographic.height,
-      heading: 0,
-      pitch: 0,
-      roll: 0,
-      scale: 1,
-    };
+    // Use utility to extract all parameters including rotation and scale
+    return computeParametersFromTransform(Cesium.Matrix4.toArray(initialMatrix));
   });
   const [commandCopied, setCommandCopied] = useState(false);
   const [showTransform, setShowTransform] = useState(false);

@@ -6,6 +6,7 @@ import {
   HeadingPitchRoll,
   Math as CesiumMath,
   DeveloperError,
+  Ellipsoid,
 } from "cesium";
 
 /**
@@ -92,4 +93,49 @@ export function computeTransformFromCartographicPositionAndRotationDegrees(
   );
   const transformArray = Matrix4.toArray(transform);
   return transformArray;
+}
+
+/**
+ * Computes the cartographic position, rotation (heading, pitch, roll), and scale
+ * from a given transformation matrix.
+ *
+ * @param transformArray - The 4x4 transformation matrix as an array
+ * @returns Object containing latitude, longitude, altitude, heading, pitch, roll, and scale
+ */
+export function computeParametersFromTransform(transformArray: number[]) {
+  const transform = Matrix4.fromArray(transformArray);
+
+  // 1. Get Translation (Position)
+  const position = Matrix4.getTranslation(transform, new Cartesian3());
+  const cartographic = Cartographic.fromCartesian(position);
+
+  // 2. Get Scale
+  const scaleVector = Matrix4.getScale(transform, new Cartesian3());
+  const scale = scaleVector.x; // Assume uniform scale for now
+
+  // 3. Get Rotation (Heading, Pitch, Roll)
+  // We need to unscale the matrix for accurate rotation extraction if scale != 1
+  const unscaledTransform = Matrix4.clone(transform);
+  const inverseScale = new Cartesian3(
+      scale !== 0 ? 1.0 / scaleVector.x : 1.0, 
+      scale !== 0 ? 1.0 / scaleVector.y : 1.0, 
+      scale !== 0 ? 1.0 / scaleVector.z : 1.0
+  );
+  Matrix4.multiplyByScale(unscaledTransform, inverseScale, unscaledTransform);
+
+  const hpr = Transforms.fixedFrameToHeadingPitchRoll(
+    unscaledTransform,
+    Ellipsoid.WGS84,
+    Transforms.eastNorthUpToFixedFrame
+  );
+
+  return {
+    longitude: CesiumMath.toDegrees(cartographic.longitude),
+    latitude: CesiumMath.toDegrees(cartographic.latitude),
+    altitude: cartographic.height,
+    heading: CesiumMath.toDegrees(hpr.heading),
+    pitch: CesiumMath.toDegrees(hpr.pitch),
+    roll: CesiumMath.toDegrees(hpr.roll),
+    scale: scale,
+  };
 }
