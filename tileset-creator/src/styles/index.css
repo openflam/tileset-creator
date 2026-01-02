@@ -67,25 +67,28 @@ button:focus-visible {
   }
 }
 
-/* Map Sidebar Grouping Styles */
+/* Map Sidebar Grouping Styles (Light Theme) */
 
-/* Ensure accordion blends with dark theme */
+/* Ensure accordion resets */
 .accordion-item {
   background-color: transparent;
   border: none;
 }
 
+/* Main Accordion Button - Light */
 .accordion-button {
-  background-color: #2a2a2a;
-  color: #e0e0e0;
-  box-shadow: none !important; /* Remove blue glow */
+  background-color: #f8f9fa;
+  color: #212529;
+  border: 1px solid #dee2e6;
+  box-shadow: none !important;
   border-radius: 6px !important;
   margin-bottom: 4px;
 }
 
 .accordion-button:not(.collapsed) {
-  background-color: #333;
-  color: #fff;
+  background-color: #e9ecef;
+  color: #000;
+  box-shadow: inset 0 -1px 0 rgba(0,0,0,.125);
 }
 
 /* Building Group */
@@ -94,42 +97,73 @@ button:focus-visible {
   font-size: 1rem;
 }
 
-/* Unknown Building - Greyish styling */
+/* Unknown Building - distinct greyish but light */
 .unknown-building-header .accordion-button {
-  background-color: #1f1f1f;
-  color: #888;
+  background-color: #e2e3e5;
+  color: #6c757d;
   font-style: italic;
 }
 
 .unknown-building-header .accordion-button:not(.collapsed) {
-  background-color: #252525;
-  color: #aaa;
+  background-color: #d6d8db;
+  color: #495057;
 }
 
 /* Nested Floor Groups */
 .floor-group {
-  margin-left: 8px;
-  border-left: 2px solid #444;
+    margin-left: 8px;
+    border-left: 2px solid #dee2e6;
 }
 
 .floor-group .accordion-button {
   padding: 0.5rem 0.75rem;
   font-size: 0.9rem;
-  background-color: transparent;
+  background-color: #fff;
+  color: #495057;
+  border: 1px solid #dee2e6; /* Ensure border for nested */
 }
 
 .floor-group .accordion-button:not(.collapsed) {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: #f1f3f5;
+  color: #212529;
 }
 
-/* Unknown Floor - Subtle styling */
+/* Unknown Floor */
 .unknown-floor-header .accordion-button {
-  color: #777;
+  color: #adb5bd;
   font-style: italic;
 }
 
-/* Adjust map card inside accordion */
+/* Compact Cards Overrides */
 .accordion-body .card {
-  background-color: #2b2b2b;
-  border: 1px solid #444;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    margin-bottom: 0.5rem !important; /* Override mb-3 */
+    color: #212529; /* Force dark text for light card */
+}
+
+/* Compact padding */
+.accordion-body .card-body {
+    padding: 0.5rem;
+}
+
+/* Compact Image override */
+.accordion-body .card img {
+    width: 32px !important;
+    height: 32px !important;
+}
+
+/* Adjust text size */
+.accordion-body .card-title {
+    font-size: 0.95rem;
+}
+
+/* Compact Form elements */
+.accordion-body .form-check {
+    margin-bottom: 0.25rem !important;
+}
+
+.accordion-body .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
 }
