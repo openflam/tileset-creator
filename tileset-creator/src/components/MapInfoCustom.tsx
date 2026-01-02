@@ -154,21 +154,33 @@ function MapInfoCustom({ mapInfo }: PropsType) {
   };
 
   return (
-    <Card className="w-100 mb-3">
-      <Card.Body>
-        <Row className="align-items-center mb-3">
-          <Col xs="auto">
-            <Image
-              src={mapInfo.mapIconUrl}
-              alt={mapInfo.name}
-              rounded
-              style={{ width: "60px", height: "60px", objectFit: "contain" }}
-            />
-          </Col>
-          <Col>
-            <Card.Title className="mb-0">{mapInfo.commonName}</Card.Title>
-          </Col>
-        </Row>
+    <>
+      <hr className="my-4" />
+      <Card 
+        className="w-100 mb-3" 
+        style={{ 
+          backgroundColor: "#f0f7ff", 
+          border: "2px solid #0d6efd" 
+        }}
+      >
+        <Card.Body>
+          <h5 className="text-primary mb-3">
+            <i className="bi bi-pencil-square me-2"></i>
+            Adjust Transform:
+          </h5>
+          <Row className="align-items-center mb-3">
+            <Col xs="auto">
+              <Image
+                src={mapInfo.mapIconUrl}
+                alt={mapInfo.name}
+                rounded
+                style={{ width: "60px", height: "60px", objectFit: "contain" }}
+              />
+            </Col>
+            <Col>
+              <Card.Title className="mb-0">{mapInfo.commonName}</Card.Title>
+            </Col>
+          </Row>
 
         <Form>
           <h5 className="mt-3">Location</h5>
@@ -271,6 +283,7 @@ function MapInfoCustom({ mapInfo }: PropsType) {
         </Row>
       </Card.Body>
     </Card>
+    </>
   );
 }
 
