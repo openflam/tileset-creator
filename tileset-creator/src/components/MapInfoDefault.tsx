@@ -90,7 +90,7 @@ function MapInfoDefault({ mapInfo, setEditingMap, onVisibilityChange }: PropsTyp
               variant="primary"
               size="sm"
               onClick={setEditingMap ? () => setEditingMap(mapInfo) : undefined}
-              className="mb-0 mt-2 w-100"
+              className="mb-0 mt-2"
             >
               Adjust map transform
             </Button>
