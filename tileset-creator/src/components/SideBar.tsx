@@ -1,8 +1,7 @@
 import { Viewer } from "cesium";
 import { useState } from "react";
 import { Button, Form } from "react-bootstrap";
-import MapInfoAuth from "./MapInfoAuth";
-import MapInfoDefault from "./MapInfoDefault";
+import SidebarMapList from "./SidebarMapList";
 import MapInfoCustom from "./MapInfoCustom";
 import AddGLBModal from "./AddGLBModal";
 import AddMapServerModal from "./AddMapServerModal";
@@ -49,37 +48,11 @@ function SideBar({
         />
       </div>
       <>
-        {Object.entries(mapTilesLoaded)
-          .filter(
-            ([_, mapInfo]) =>
-              !mapInfo.authenticated && mapInfo.type === "default",
-          )
-          .map(([url, mapInfo]) => (
-            <MapInfoAuth key={url} mapInfo={mapInfo} />
-          ))}
-
-        {Object.entries(mapTilesLoaded)
-          .filter(
-            ([_, mapInfo]) =>
-              mapInfo.tile &&
-              mapInfo.type === "default" &&
-              mapInfo.authenticated &&
-              mapInfo.placement !== "unplaced",
-          )
-          .map(([url, mapInfo]) => (
-            <MapInfoDefault
-              key={url}
-              mapInfo={mapInfo}
-              setEditingMap={setEditingMap}
-            />
-          ))}
-
-        {CONFIG.MODE === "global" &&
-          Object.entries(mapTilesLoaded)
-            .filter(([_, mapInfo]) => mapInfo.tile && mapInfo.type === "custom")
-            .map(([url, mapInfo]) => (
-              <MapInfoCustom key={url} mapInfo={mapInfo} viewer={viewer} />
-            ))}
+        <SidebarMapList
+          mapTilesLoaded={mapTilesLoaded}
+          viewer={viewer}
+          setEditingMap={setEditingMap}
+        />
 
         {CONFIG.MODE === "map-server" && editingMap && (
           <MapInfoCustom key={editingMap.url} mapInfo={editingMap} viewer={viewer} />

@@ -66,3 +66,70 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+/* Map Sidebar Grouping Styles */
+
+/* Ensure accordion blends with dark theme */
+.accordion-item {
+  background-color: transparent;
+  border: none;
+}
+
+.accordion-button {
+  background-color: #2a2a2a;
+  color: #e0e0e0;
+  box-shadow: none !important; /* Remove blue glow */
+  border-radius: 6px !important;
+  margin-bottom: 4px;
+}
+
+.accordion-button:not(.collapsed) {
+  background-color: #333;
+  color: #fff;
+}
+
+/* Building Group */
+.building-group > .accordion-item > .accordion-header .accordion-button {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+/* Unknown Building - Greyish styling */
+.unknown-building-header .accordion-button {
+  background-color: #1f1f1f;
+  color: #888;
+  font-style: italic;
+}
+
+.unknown-building-header .accordion-button:not(.collapsed) {
+  background-color: #252525;
+  color: #aaa;
+}
+
+/* Nested Floor Groups */
+.floor-group {
+  margin-left: 8px;
+  border-left: 2px solid #444;
+}
+
+.floor-group .accordion-button {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  background-color: transparent;
+}
+
+.floor-group .accordion-button:not(.collapsed) {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Unknown Floor - Subtle styling */
+.unknown-floor-header .accordion-button {
+  color: #777;
+  font-style: italic;
+}
+
+/* Adjust map card inside accordion */
+.accordion-body .card {
+  background-color: #2b2b2b;
+  border: 1px solid #444;
+}
