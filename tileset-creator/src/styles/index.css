@@ -163,7 +163,26 @@ button:focus-visible {
     margin-bottom: 0.25rem !important;
 }
 
-.accordion-body .btn {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.875rem;
+/* Map Group Visibility Toggle (Split Header) */
+.map-group-visibility-toggle {
+    cursor: pointer;
+    padding: 0.75rem;
+    background-color: #f8f9fa; /* var(--bs-accordion-btn-bg) */
+    border: 1px solid #dee2e6;
+    border-right: none;
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+    color: #0d6efd; /* var(--bs-primary) - Visible state */
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out;
+}
+
+.map-group-visibility-toggle.hidden {
+    color: #6c757d; /* Muted - Hidden state */
+}
+
+.map-group-visibility-toggle:hover {
+    background-color: #e9ecef; /* match accordion-button hover */
 }
