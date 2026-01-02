@@ -14,8 +14,16 @@ function MapInfoCustom({ mapInfo }: PropsType) {
 
   // Initialize state with the model's transform
   const [params, setParams] = useState(() => {
-    const matrix = model.modelMatrix.clone();
-    const pos = Cesium.Matrix4.getTranslation(matrix, new Cesium.Cartesian3());
+    let initialMatrix = model.modelMatrix.clone();
+
+    if (mapInfo.type === "default" && mapInfo.tile instanceof Cesium.Cesium3DTileset) {
+        const tileset = mapInfo.tile;
+        if (tileset.root && !Cesium.Matrix4.equals(tileset.root.transform, Cesium.Matrix4.IDENTITY)) {
+             initialMatrix = Cesium.Matrix4.multiply(model.modelMatrix, tileset.root.transform, new Cesium.Matrix4());
+        }
+    }
+
+    const pos = Cesium.Matrix4.getTranslation(initialMatrix, new Cesium.Cartesian3());
     const cartographic = Cesium.Ellipsoid.WGS84.cartesianToCartographic(pos);
 
     return {
@@ -44,8 +52,18 @@ function MapInfoCustom({ mapInfo }: PropsType) {
         [params.heading, params.pitch, params.roll],
         params.scale,
       );
-    model.modelMatrix = Cesium.Matrix4.fromArray(transformArray);
-  }, [params, model]);
+
+    const newMatrix = Cesium.Matrix4.fromArray(transformArray);
+
+    if (mapInfo.type === "default" && mapInfo.tile instanceof Cesium.Cesium3DTileset) {
+        const tileset = mapInfo.tile;
+        if (tileset.root && !Cesium.Matrix4.equals(tileset.root.transform, Cesium.Matrix4.IDENTITY)) {
+             tileset.root.transform = Cesium.Matrix4.IDENTITY.clone();
+        }
+    }
+
+    model.modelMatrix = newMatrix;
+  }, [params, model, mapInfo]);
 
   // Compute the transform matrix array
   const transformArray = useMemo(() => {
