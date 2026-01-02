@@ -61,7 +61,7 @@ function MapInfoDefault({ mapInfo, setEditingMap }: PropsType) {
               onClick={setEditingMap ? () => setEditingMap(mapInfo) : undefined}
               className="mb-3"
             >
-              Edit Map Info
+              Adjust map transform
             </Button>
           )}
 
