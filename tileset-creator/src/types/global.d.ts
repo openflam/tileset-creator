@@ -4,6 +4,8 @@ declare global {
   // Type returned by the discoverMaps function
   type MapInfo = {
     id?: number; // Map ID from the API
+    building_id?: number | null;
+    levels?: any;
     commonName: string; // "Common name" borrowed from MapServer
     name: string; // "Map name" borrowed from MapServer
     type: "default" | "custom";

@@ -91,6 +91,9 @@ async function mapServersToMapInfos(mapsDiscovered: {
     const mapServer = mapsDiscovered[mapName];
 
     const mapInfo: MapInfo = {
+      id: (mapServer as any).id,
+      building_id: (mapServer as any).building_id,
+      levels: (mapServer as any).levels,
       commonName: mapServer.capabilities.commonName!,
       name: mapServer.name,
       type: "default", // All discovered maps are default maps.
