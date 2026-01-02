@@ -1,21 +1,36 @@
-import { Viewer } from "cesium";
+import { TrustedServers, Viewer } from "cesium";
 import { MapsDiscovery } from "@openflam/dnsspatialdiscovery";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import CONFIG from "../config";
 import CesiumViewer from "./CesiumViewer";
 import SideBar from "./SideBar";
+import { AddMapServer } from "../utils/openflame/discover.ts";
 
 function HomePage() {
   // The mapTilesLoaded state is used to keep track of the loaded map tiles.
   const [mapTilesLoaded, setMapTilesLoaded] = useState<MapTilesLoaded>({});
   const [viewer, setViewer] = useState<Viewer | null>(null);
-  const [discoverEnabled, setDiscoverEnabled] = useState(true);
+  const [discoverEnabled, setDiscoverEnabled] = useState(
+    CONFIG.MODE !== "map-server",
+  );
 
   const mapsDiscoveryObj = new MapsDiscovery(CONFIG.DISCOVERY_SUFFIX);
+
+  useEffect(() => {
+    if (viewer && CONFIG.MODE === "map-server") {
+      console.log("Adding default map server:", CONFIG.DEFAULT_MAP_SERVER);
+      AddMapServer(
+        CONFIG.DEFAULT_MAP_SERVER || window.location.host,
+        viewer,
+        setMapTilesLoaded,
+      );
+      TrustedServers.add(CONFIG.DEFAULT_MAP_SERVER, 443);
+    }
+  }, [viewer]);
 
   const sidebarComponent = viewer ? (
     <SideBar

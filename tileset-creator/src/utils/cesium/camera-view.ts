@@ -85,4 +85,47 @@ function getPolygonFromViewer(viewer: Viewer): Geometry | null {
   return rectangleGeometry;
 }
 
-export { getPolygonFromViewer };
+/**
+ * Get a position in front of the camera at a specified distance.
+ * Useful for placing new objects where the user is looking.
+ * @param viewer - The Cesium Viewer
+ * @param distance - Distance in meters in front of the camera (default: 10)
+ * @returns Object with cartesian position and cartographic coordinates (lat/lon/alt in degrees/meters)
+ */
+function getPositionInFrontOfCamera(
+  viewer: Viewer,
+  distance: number = 10.0
+): {
+  position: Cartesian3;
+  latitude: number;
+  longitude: number;
+  altitude: number;
+} {
+  const camera = viewer.scene.camera;
+  const cameraPosition = camera.positionWC;
+  const cameraDirection = camera.directionWC;
+
+  // Calculate position at specified distance in front of camera
+  const offset = Cartesian3.multiplyByScalar(
+    cameraDirection,
+    distance,
+    new Cartesian3()
+  );
+  const position = Cartesian3.add(
+    cameraPosition,
+    offset,
+    new Cartesian3()
+  );
+
+  // Convert to cartographic for lat/lon/alt
+  const cartographic = Cartographic.fromCartesian(position);
+
+  return {
+    position,
+    latitude: CesiumMath.toDegrees(cartographic.latitude),
+    longitude: CesiumMath.toDegrees(cartographic.longitude),
+    altitude: cartographic.height,
+  };
+}
+
+export { getPolygonFromViewer, getPositionInFrontOfCamera };

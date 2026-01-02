@@ -1,5 +1,6 @@
 import { Cesium3DTileset, Cesium3DTileStyle } from "cesium";
-import { Card, Form, Row, Col, Image } from "react-bootstrap";
+import { Card, Form, Row, Col, Image, Button } from "react-bootstrap";
+import CONFIG from "../config.ts";
 
 const changeTilesetOpacity = (tileset: Cesium3DTileset, opacity: number) => {
   if (tileset) {
@@ -21,8 +22,9 @@ const changeTilesetVisibility = (
 // Define the type for the props
 interface PropsType {
   mapInfo: MapInfo;
+  setEditingMap?: React.Dispatch<React.SetStateAction<MapInfo | null>>;
 }
-function MapInfoDefault({ mapInfo }: PropsType) {
+function MapInfoDefault({ mapInfo, setEditingMap }: PropsType) {
   return (
     <Card className="w-100 mb-3">
       <Card.Body>
@@ -53,6 +55,15 @@ function MapInfoDefault({ mapInfo }: PropsType) {
             }}
             className="mb-3"
           />
+          {CONFIG.MODE === "map-server" && !mapInfo.key && (
+            <Button
+              variant="primary"
+              onClick={setEditingMap ? () => setEditingMap(mapInfo) : undefined}
+              className="mb-3"
+            >
+              Adjust map transform
+            </Button>
+          )}
 
           <Form.Group>
             <Form.Label>Opacity</Form.Label>

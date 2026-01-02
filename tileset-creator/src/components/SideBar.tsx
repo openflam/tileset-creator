@@ -6,6 +6,8 @@ import MapInfoDefault from "./MapInfoDefault";
 import MapInfoCustom from "./MapInfoCustom";
 import AddGLBModal from "./AddGLBModal";
 import AddMapServerModal from "./AddMapServerModal";
+import SelectMapModal from "./SelectMapModal";
+import CONFIG from "../config";
 
 type propsType = {
   mapTilesLoaded: MapTilesLoaded;
@@ -24,7 +26,9 @@ function SideBar({
 }: propsType) {
   const [showAddGLBModal, setShowAddGLBModal] = useState(false);
   const [showAddMapServerModal, setShowAddMapServerModal] = useState(false);
-  const [editEnabled, setEditEnabled] = useState(false);
+  const [showSelectMapModal, setShowSelectMapModal] = useState(false);
+  const [editEnabled, setEditEnabled] = useState(CONFIG.MODE === "map-server");
+  const [editingMap, setEditingMap] = useState<MapInfo | null>(null);
 
   return (
     <div className="p-3">
@@ -34,13 +38,14 @@ function SideBar({
           checked={discoverEnabled}
           label="Discover"
           className="me-3"
-          onClick={() => setDiscoverEnabled(!discoverEnabled)}
+          onChange={() => setDiscoverEnabled(!discoverEnabled)}
         />
+
         <Form.Check
           type="switch"
           checked={editEnabled}
           label="Edit"
-          onClick={() => setEditEnabled(!editEnabled)}
+          onChange={() => setEditEnabled(!editEnabled)}
         />
       </div>
       <>
@@ -58,19 +63,29 @@ function SideBar({
             ([_, mapInfo]) =>
               mapInfo.tile &&
               mapInfo.type === "default" &&
-              mapInfo.authenticated,
+              mapInfo.authenticated &&
+              mapInfo.placement !== "unplaced",
           )
           .map(([url, mapInfo]) => (
-            <MapInfoDefault key={url} mapInfo={mapInfo} />
+            <MapInfoDefault
+              key={url}
+              mapInfo={mapInfo}
+              setEditingMap={setEditingMap}
+            />
           ))}
 
-        {Object.entries(mapTilesLoaded)
-          .filter(([_, mapInfo]) => mapInfo.tile && mapInfo.type === "custom")
-          .map(([url, mapInfo]) => (
-            <MapInfoCustom key={url} mapInfo={mapInfo} />
-          ))}
+        {CONFIG.MODE === "global" &&
+          Object.entries(mapTilesLoaded)
+            .filter(([_, mapInfo]) => mapInfo.tile && mapInfo.type === "custom")
+            .map(([url, mapInfo]) => (
+              <MapInfoCustom key={url} mapInfo={mapInfo} viewer={viewer} />
+            ))}
+
+        {CONFIG.MODE === "map-server" && editingMap && (
+          <MapInfoCustom key={editingMap.url} mapInfo={editingMap} viewer={viewer} />
+        )}
       </>
-      {editEnabled && (
+      {editEnabled && CONFIG.MODE === "global" && (
         <>
           <Button
             variant="primary"
@@ -90,11 +105,29 @@ function SideBar({
         </>
       )}
 
+      {editEnabled && CONFIG.MODE === "map-server" && (
+        <Button
+          variant="primary"
+          className="w-100 mt-3"
+          onClick={() => setShowSelectMapModal(true)}
+        >
+          List Unpublished Maps
+        </Button>
+      )}
+
       <AddGLBModal
         show={showAddGLBModal}
         onClose={() => setShowAddGLBModal(false)}
         viewer={viewer}
         setMapTilesLoaded={setMapTilesLoaded}
+      />
+
+      <SelectMapModal
+        show={showSelectMapModal}
+        onClose={() => setShowSelectMapModal(false)}
+        viewer={viewer}
+        setMapTilesLoaded={setMapTilesLoaded}
+        setEditingMap={setEditingMap}
       />
 
       <AddMapServerModal
