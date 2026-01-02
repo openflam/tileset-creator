@@ -2,17 +2,19 @@ import { Card, Row, Col, Image, Form, Button, Alert } from "react-bootstrap";
 import { useEffect, useState, useMemo } from "react";
 import * as Cesium from "cesium";
 import { computeTransformFromCartographicPositionAndRotationDegrees } from "../utils/cesium/transforms";
+import { getPositionInFrontOfCamera } from "../utils/cesium/camera-view";
 import CONFIG from "../config";
 import { getCookie } from "../utils/cookie";
 
 interface PropsType {
   mapInfo: MapInfo;
+  viewer: Cesium.Viewer;
 }
 
-function MapInfoCustom({ mapInfo }: PropsType) {
+function MapInfoCustom({ mapInfo, viewer }: PropsType) {
   const model = mapInfo.tile as Cesium.Model | Cesium.Cesium3DTileset;
 
-  // Initialize state with the model's transform
+  // Initialize state with the model's transform, or camera position if identity matrix
   const [params, setParams] = useState(() => {
     let initialMatrix = model.modelMatrix.clone();
 
@@ -21,6 +23,22 @@ function MapInfoCustom({ mapInfo }: PropsType) {
         if (tileset.root && !Cesium.Matrix4.equals(tileset.root.transform, Cesium.Matrix4.IDENTITY)) {
              initialMatrix = Cesium.Matrix4.multiply(model.modelMatrix, tileset.root.transform, new Cesium.Matrix4());
         }
+    }
+
+    // Check if the matrix is identity (no transform set) - fall back to camera position
+    if (Cesium.Matrix4.equals(initialMatrix, Cesium.Matrix4.IDENTITY)) {
+      // Use camera position utility (same as addUnplacedDefaultMapTiles)
+      const { latitude, longitude, altitude } = getPositionInFrontOfCamera(viewer, 10.0);
+
+      return {
+        latitude,
+        longitude,
+        altitude,
+        heading: 0,
+        pitch: 0,
+        roll: 0,
+        scale: 1,
+      };
     }
 
     const pos = Cesium.Matrix4.getTranslation(initialMatrix, new Cesium.Cartesian3());

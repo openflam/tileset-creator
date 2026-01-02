@@ -5,10 +5,10 @@ import {
   Viewer,
   Model as CesiumModel,
   Transforms as CesiumTransforms,
-  Cartesian3,
   TrustedServers,
 } from "cesium";
 import { consoleLog } from "../log";
+import { getPositionInFrontOfCamera } from "./camera-view";
 
 async function addTilesetFromMapInfo(
   viewer: Viewer,
@@ -94,25 +94,9 @@ async function addUnplacedDefaultMapTiles(
   // Load the tileset as normal
   const tileset = await addDefaultMapTiles(viewer, mapInfo);
 
-  // Get the current camera position and direction
-  const camera = viewer.scene.camera;
-  const cameraPosition = camera.positionWC;
-  const cameraDirection = camera.directionWC;
-
-  // Place the model 10 meters in front of the camera
-  const distance = 10.0;
-  const offset = Cartesian3.multiplyByScalar(
-    cameraDirection,
-    distance,
-    new Cartesian3(),
-  );
-  const modelPosition = Cartesian3.add(
-    cameraPosition,
-    offset,
-    new Cartesian3(),
-  );
-
-  const modelMatrix = CesiumTransforms.eastNorthUpToFixedFrame(modelPosition);
+  // Place the model 10 meters in front of the camera using utility
+  const { position } = getPositionInFrontOfCamera(viewer, 10.0);
+  const modelMatrix = CesiumTransforms.eastNorthUpToFixedFrame(position);
 
   // Apply the transformation to the tileset
   tileset.modelMatrix = modelMatrix;
@@ -127,25 +111,9 @@ async function addCustomMapTiles(
 ): Promise<CesiumModel> {
   const { url } = mapInfo;
 
-  // Get the current camera position and direction
-  const camera = viewer.scene.camera;
-  const cameraPosition = camera.positionWC;
-  const cameraDirection = camera.directionWC;
-
-  // Place the model 10 meters in front of the camera
-  const distance = 10.0;
-  const offset = Cartesian3.multiplyByScalar(
-    cameraDirection,
-    distance,
-    new Cartesian3(),
-  );
-  const modelPosition = Cartesian3.add(
-    cameraPosition,
-    offset,
-    new Cartesian3(),
-  );
-
-  const modelMatrix = CesiumTransforms.eastNorthUpToFixedFrame(modelPosition);
+  // Place the model 10 meters in front of the camera using utility
+  const { position } = getPositionInFrontOfCamera(viewer, 10.0);
+  const modelMatrix = CesiumTransforms.eastNorthUpToFixedFrame(position);
 
   const model = await CesiumModel.fromGltfAsync({
     url: url!,

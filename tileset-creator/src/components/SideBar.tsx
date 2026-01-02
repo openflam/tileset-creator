@@ -78,11 +78,11 @@ function SideBar({
           Object.entries(mapTilesLoaded)
             .filter(([_, mapInfo]) => mapInfo.tile && mapInfo.type === "custom")
             .map(([url, mapInfo]) => (
-              <MapInfoCustom key={url} mapInfo={mapInfo} />
+              <MapInfoCustom key={url} mapInfo={mapInfo} viewer={viewer} />
             ))}
 
         {CONFIG.MODE === "map-server" && editingMap && (
-          <MapInfoCustom key={editingMap.url} mapInfo={editingMap} />
+          <MapInfoCustom key={editingMap.url} mapInfo={editingMap} viewer={viewer} />
         )}
       </>
       {editEnabled && CONFIG.MODE === "global" && (
