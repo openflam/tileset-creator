@@ -1,4 +1,11 @@
-import { Viewer, Camera, Rectangle, Color as CesiumColor, Ion } from "cesium";
+import {
+  Viewer,
+  IonGeocodeProviderType,
+  Camera,
+  Rectangle,
+  Color as CesiumColor,
+  Ion,
+} from "cesium";
 import { MapsDiscovery } from "@openflam/dnsspatialdiscovery";
 import { useEffect, useRef, useState } from "react";
 

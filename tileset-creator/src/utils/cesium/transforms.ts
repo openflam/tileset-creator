@@ -117,16 +117,16 @@ export function computeParametersFromTransform(transformArray: number[]) {
   // We need to unscale the matrix for accurate rotation extraction if scale != 1
   const unscaledTransform = Matrix4.clone(transform);
   const inverseScale = new Cartesian3(
-    scale !== 0 ? 1.0 / scaleVector.x : 1.0,
-    scale !== 0 ? 1.0 / scaleVector.y : 1.0,
-    scale !== 0 ? 1.0 / scaleVector.z : 1.0,
+      scale !== 0 ? 1.0 / scaleVector.x : 1.0, 
+      scale !== 0 ? 1.0 / scaleVector.y : 1.0, 
+      scale !== 0 ? 1.0 / scaleVector.z : 1.0
   );
   Matrix4.multiplyByScale(unscaledTransform, inverseScale, unscaledTransform);
 
   const hpr = Transforms.fixedFrameToHeadingPitchRoll(
     unscaledTransform,
     Ellipsoid.WGS84,
-    Transforms.eastNorthUpToFixedFrame,
+    Transforms.eastNorthUpToFixedFrame
   );
 
   return {

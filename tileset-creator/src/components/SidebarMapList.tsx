@@ -12,17 +12,21 @@ type Props = {
   setEditingMap: React.Dispatch<React.SetStateAction<MapInfo | null>>;
 };
 
-function SidebarMapList({ mapTilesLoaded, viewer, setEditingMap }: Props) {
+function SidebarMapList({
+  mapTilesLoaded,
+  viewer,
+  setEditingMap,
+}: Props) {
   // Local state to trigger re-renders when visibility changes
   const [, setTick] = useState(0);
   const forceUpdate = useCallback(() => setTick((t) => t + 1), []);
 
   const groupedMaps = useMemo(() => {
-    // ... (grouping logic remains same, dependent on mapTilesLoaded)
-    // NOTE: If maps are added/removed, mapTilesLoaded changes, triggering this.
-    // Visibility changes do NOT change mapTilesLoaded reference, so this memo won't re-run.
-    // But renderBuildingContent runs on every render.
-    // IsGrouping dependent on visibility? No.
+     // ... (grouping logic remains same, dependent on mapTilesLoaded)
+     // NOTE: If maps are added/removed, mapTilesLoaded changes, triggering this.
+     // Visibility changes do NOT change mapTilesLoaded reference, so this memo won't re-run.
+     // But renderBuildingContent runs on every render.
+     // IsGrouping dependent on visibility? No.
     const maps = Object.entries(mapTilesLoaded)
       .map(([url, mapInfo]) => ({ ...mapInfo, urlOrKey: url }))
       .filter((map) => {
@@ -69,9 +73,9 @@ function SidebarMapList({ mapTilesLoaded, viewer, setEditingMap }: Props) {
     // 2. Trigger local re-render
     forceUpdate();
   };
-
+  
   const isGroupVisible = (maps: MapInfo[]) => {
-    return maps.every((m) => m.tile?.show !== false);
+      return maps.every(m => m.tile?.show !== false);
   };
 
   const renderMapItem = (map: MapInfo) => {
@@ -143,9 +147,7 @@ function SidebarMapList({ mapTilesLoaded, viewer, setEditingMap }: Props) {
               title={floor}
               className={`floor-group ${isUnknown ? "unknown-floor" : ""}`}
               headerClassName={isUnknown ? "unknown-floor-header" : ""}
-              onToggleVisibility={() =>
-                toggleGroupVisibility(floorMaps, !isGroupVisible(floorMaps))
-              }
+              onToggleVisibility={() => toggleGroupVisibility(floorMaps, !isGroupVisible(floorMaps))}
               isVisible={isGroupVisible(floorMaps)}
             >
               <div className="d-flex flex-column gap-2 p-2">
@@ -183,9 +185,7 @@ function SidebarMapList({ mapTilesLoaded, viewer, setEditingMap }: Props) {
             title={buildingName}
             className={`building-group ${isUnknown ? "unknown-building" : ""}`}
             headerClassName={isUnknown ? "unknown-building-header" : ""}
-            onToggleVisibility={() =>
-              toggleGroupVisibility(maps, !isGroupVisible(maps))
-            }
+            onToggleVisibility={() => toggleGroupVisibility(maps, !isGroupVisible(maps))}
             isVisible={isGroupVisible(maps)}
           >
             <div className="p-2">{renderBuildingContent(maps)}</div>

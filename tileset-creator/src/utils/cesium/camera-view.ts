@@ -94,7 +94,7 @@ function getPolygonFromViewer(viewer: Viewer): Geometry | null {
  */
 function getPositionInFrontOfCamera(
   viewer: Viewer,
-  distance: number = 10.0,
+  distance: number = 10.0
 ): {
   position: Cartesian3;
   latitude: number;
@@ -109,9 +109,13 @@ function getPositionInFrontOfCamera(
   const offset = Cartesian3.multiplyByScalar(
     cameraDirection,
     distance,
-    new Cartesian3(),
+    new Cartesian3()
   );
-  const position = Cartesian3.add(cameraPosition, offset, new Cartesian3());
+  const position = Cartesian3.add(
+    cameraPosition,
+    offset,
+    new Cartesian3()
+  );
 
   // Convert to cartographic for lat/lon/alt
   const cartographic = Cartographic.fromCartesian(position);
