@@ -4,10 +4,9 @@ import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import { useEffect, useState } from "react";
-import type { LabelInfo } from "./labels/LabelCard";
 
 import CONFIG from "../config";
-import CesiumViewer from "./viewer/CesiumViewer";
+import CesiumViewer from "./CesiumViewer";
 import SideBar from "./SideBar";
 import { AddMapServer } from "../utils/openflame/discover.ts";
 
@@ -19,7 +18,6 @@ function HomePage() {
     CONFIG.MODE !== "map-server",
   );
   const [googleOpacity, setGoogleOpacity] = useState(1);
-  const [labels, setLabels] = useState<LabelInfo[]>([]);
 
   const mapsDiscoveryObj = new MapsDiscovery(CONFIG.DISCOVERY_SUFFIX);
 
@@ -44,8 +42,6 @@ function HomePage() {
       setDiscoverEnabled={setDiscoverEnabled}
       googleOpacity={googleOpacity}
       onGoogleOpacityChange={setGoogleOpacity}
-      labels={labels}
-      setLabels={setLabels}
     />
   ) : null;
 
