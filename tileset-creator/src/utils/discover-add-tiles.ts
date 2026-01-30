@@ -90,9 +90,15 @@ function addDefaultTiles(
   viewer: Viewer,
   setMapTilesLoaded: React.Dispatch<React.SetStateAction<MapTilesLoaded>>,
 ) {
+  if (!viewer || !viewer.scene) {
+    console.warn("Cannot add default tiles: viewer is not initialized");
+    return;
+  }
   // Add Google photorealistic tileset as a default map.
   const defaultMapInfo: MapInfo = CONFIG.GOOGLE_3D_TILES;
-  addTilesetFromMapInfo(viewer, defaultMapInfo, setMapTilesLoaded);
+  addTilesetFromMapInfo(viewer, defaultMapInfo, setMapTilesLoaded).catch((error) => {
+    console.error("Error adding default tiles:", error);
+  });
 }
 
 export { discoverAndAddTiles, addDefaultTiles };

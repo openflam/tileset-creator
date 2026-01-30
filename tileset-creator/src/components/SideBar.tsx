@@ -1,16 +1,17 @@
 import { Viewer, Cartesian3 } from "cesium";
 import { useState } from "react";
 import { Button, Form } from "react-bootstrap";
-import { createLabel } from "../utils/cesium/label";
-import { type CameraViewData } from "../utils/cesium/camera-utils";
-import { type LabelInfo } from "./labels/LabelCard";
 import SidebarMapList from "./SidebarMapList";
 import MapInfoCustom from "./MapInfoCustom";
-import AddGLBModal from "./AddGLBModal";
-import AddMapServerModal from "./AddMapServerModal";
+import AddGLBModal from "./modals/AddGLBModal";
+import AddMapServerModal from "./modals/AddMapServerModal";
 import SelectMapModal from "./SelectMapModal";
-import CameraInfoModal from "./modals/CameraInfoModal";
 import CONFIG from "../config";
+import { type CameraViewData } from "../utils/cesium/camera-utils";
+import CameraInfoModal from "./modals/CameraInfoModal";
+import { type LabelInfo } from "./labels/LabelCard";
+import { createLabel } from "../utils/cesium/label";
+import MapInfoDefault from "./map-info/MapInfoDefault";
 
 type propsType = {
   mapTilesLoaded: MapTilesLoaded;
@@ -37,10 +38,10 @@ function SideBar({
 }: propsType) {
   const [showAddGLBModal, setShowAddGLBModal] = useState(false);
   const [showAddMapServerModal, setShowAddMapServerModal] = useState(false);
-  const [showCameraInfoModal, setShowCameraInfoModal] = useState(false);
   const [showSelectMapModal, setShowSelectMapModal] = useState(false);
   const [editEnabled, setEditEnabled] = useState(CONFIG.MODE === "map-server");
   const [editingMap, setEditingMap] = useState<MapInfo | null>(null);
+  const [showCameraInfoModal, setShowCameraInfoModal] = useState(false);
 
 
   const handleLabelCreated = (labelInfo: LabelInfo) => {
@@ -222,10 +223,55 @@ function SideBar({
           setEditingMap={setEditingMap}
         />
 
+        {CONFIG.MODE === "global" && (
+          <>
+            {Object.entries(mapTilesLoaded)
+              .filter(
+                ([_, mapInfo]) =>
+                  mapInfo.tile &&
+                  mapInfo.type === "default" &&
+                  mapInfo.authenticated,
+              )
+              .map(([url, mapInfo]) => {
+                // Check if this is the Google tileset
+                const isGoogle = mapInfo.name === 'Google' || mapInfo.commonName === 'Google';
+                
+                return (
+                  <MapInfoDefault 
+                    key={url} 
+                    mapInfo={mapInfo}
+                    externalOpacity={isGoogle ? googleOpacity : undefined}
+                    onOpacityChange={isGoogle ? onGoogleOpacityChange : undefined}
+                    onAddLabel={handleAddLabelFromCamera}
+                    viewer={viewer}
+                    labels={labels}
+                    mapUrl={url}
+                    onDeleteLabel={handleDeleteLabel}
+                    onLabelPositionChange={handleLabelPositionChange}
+                    onDeleteAllLabels={handleDeleteAllLabels}
+                    onSubmitLabels={handleSubmitLabels}
+                    editEnabled={editEnabled}
+                  />
+                );
+              })}
+
+            {Object.entries(mapTilesLoaded)
+              .filter(([_, mapInfo]) => mapInfo.tile && mapInfo.type === "custom")
+              .map(([url, mapInfo]) => (
+                <MapInfoCustom 
+                  key={url} 
+                  mapInfo={mapInfo} 
+                  viewer={viewer}
+                />
+              ))}
+          </>
+        )}
+
         {CONFIG.MODE === "map-server" && editingMap && (
           <MapInfoCustom key={editingMap.url} mapInfo={editingMap} viewer={viewer} />
         )}
       </>
+
       {editEnabled && CONFIG.MODE === "global" && (
         <>
           <Button
@@ -251,18 +297,14 @@ function SideBar({
           >
             Add Map Server
           </Button>
-
         </>
       )}
 
-      {editEnabled && CONFIG.MODE === "global" && (
-        <CameraInfoModal
-          show={showCameraInfoModal}
-          onClose={() => setShowCameraInfoModal(false)}
-          viewer={viewer}
-        />
-      )}
-
+      <CameraInfoModal
+        show={showCameraInfoModal}
+        onClose={() => setShowCameraInfoModal(false)}
+        viewer={viewer}
+      />
       {editEnabled && CONFIG.MODE === "map-server" && (
         <Button
           variant="primary"

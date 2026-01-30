@@ -15,6 +15,11 @@ async function addTilesetFromMapInfo(
   mapInfo: MapInfo,
   setMapTilesLoaded: React.Dispatch<React.SetStateAction<MapTilesLoaded>>,
 ): Promise<Cesium3DTileset | CesiumModel | null> {
+  if (!viewer || !viewer.scene) {
+    console.error("Cannot add tileset: viewer is not initialized or scene is not available");
+    return null;
+  }
+
   // "Default" maps are 3D Tilesets, while "Custom" maps are GLTF models.
   let tileset: Cesium3DTileset | CesiumModel | null = null;
 
@@ -45,6 +50,10 @@ async function addDefaultMapTiles(
   viewer: Viewer,
   mapInfo: MapInfo,
 ): Promise<Cesium3DTileset> {
+  if (!viewer || !viewer.scene) {
+    throw new Error("Viewer is not initialized or scene is not available");
+  }
+
   const { name, url, key, creditImageUrl, credentialsCookiesRequired } =
     mapInfo;
   let credits = undefined;
@@ -109,6 +118,10 @@ async function addCustomMapTiles(
   viewer: Viewer,
   mapInfo: MapInfo,
 ): Promise<CesiumModel> {
+  if (!viewer || !viewer.scene) {
+    throw new Error("Viewer is not initialized or scene is not available");
+  }
+
   const { url } = mapInfo;
 
   // Place the model 10 meters in front of the camera using utility

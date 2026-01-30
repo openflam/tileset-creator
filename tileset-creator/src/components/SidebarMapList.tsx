@@ -1,7 +1,7 @@
 import { useMemo, useState, useCallback } from "react";
 import { Viewer, Cesium3DTileset } from "cesium";
 import MapGroupAccordion from "./MapGroupAccordion";
-import MapInfoAuth from "./MapInfoAuth";
+import MapInfoAuth from "./map-info/MapInfoAuth";
 import MapInfoDefault from "./MapInfoDefault";
 import MapInfoCustom from "./MapInfoCustom";
 import CONFIG from "../config";

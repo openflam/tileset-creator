@@ -2,7 +2,7 @@ import { Viewer } from "cesium";
 import { useState } from "react";
 import { Modal, Button, Form } from "react-bootstrap";
 
-import { AddMapServer } from "../utils/openflame/discover";
+import { AddMapServer } from "../../utils/openflame/discover";
 
 type AddMapServerModalProps = {
   show: boolean;
