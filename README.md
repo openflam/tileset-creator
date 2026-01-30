@@ -26,11 +26,13 @@ The production key in `.env.production` is restricted to the `map.open-flame.com
 There are two build modes: Development and Production. They differ with respect to the browser console logs and the API key used. Development build logs more messages to the console and uses the development API key.
 
 Development build:
+
 ```
 npm run build:dev
 ```
 
 Production build:
+
 ```
 npm run build:prod
 ```
@@ -40,10 +42,11 @@ npm run build:prod
 The static webpage files are written to the `dist/` directory. Run any HTTP/HTTPS server to see the generated site. For example:
 
 ```
-python3 -m http.server 
+python3 -m http.server
 ```
 
 HTTPS is required for interaction with map servers that only respond to requests from secure origins. You can run a HTTPS server using:
+
 ```
 openssl req -new -x509 -keyout key.pem -out cert.pem -days 365 -nodes
 http-server -S -C cert.pem -K key.pem
@@ -52,4 +55,3 @@ http-server -S -C cert.pem -K key.pem
 ### Deploy
 
 Deploy to Github Pages using `npm run deploy`.
-

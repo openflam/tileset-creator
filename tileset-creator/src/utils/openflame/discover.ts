@@ -10,6 +10,7 @@ import { getPolygonFromViewer } from "../cesium/camera-view";
 import { consoleLog } from "../log";
 import CONFIG from "../../config";
 import customMapLogo from "../../assets/customMap.svg";
+import { addTilesetFromMapInfo } from "../cesium/add-tiles.ts";
 
 const getTileSetService = async (
   mapServer: MapServer,
@@ -90,6 +91,9 @@ async function mapServersToMapInfos(mapsDiscovered: {
     const mapServer = mapsDiscovered[mapName];
 
     const mapInfo: MapInfo = {
+      id: (mapServer as any).id,
+      building_id: (mapServer as any).building_id,
+      levels: (mapServer as any).levels,
       commonName: mapServer.capabilities.commonName!,
       name: mapServer.name,
       type: "default", // All discovered maps are default maps.
@@ -204,10 +208,58 @@ async function discoverMapsServices(
   return mapInfos;
 }
 
+function AddMapServer(
+  mapServerURL: string,
+  viewer: Viewer,
+  setMapTilesLoaded: React.Dispatch<React.SetStateAction<MapTilesLoaded>>,
+) {
+  const mapServer = new MapServer(mapServerURL);
+  mapServer.queryCapabilities().then(async () => {
+    // If it has a tileserver service, add it to the viewer.
+    console.log(mapServer);
+    const tileService = mapServer.getService("tileserver");
+    if (tileService) {
+      const authenticated = await checkAuthentication(mapServer);
+
+      const mapInfo: MapInfo = {
+        commonName: mapServer.capabilities.commonName!,
+        name: mapServer.capabilities.name!,
+        url: getFullUrl(tileService.url, mapServerURL)!,
+        type: "default",
+        key: tileService.key,
+        creditImageUrl: getFullUrl(
+          tileService.creditImageUrl || mapServer.capabilities.iconURL,
+          mapServerURL,
+        ),
+        mapIconUrl: getFullUrl(mapServer.capabilities.iconURL, mapServerURL),
+        credentialsCookiesRequired: true,
+        mapServer: mapServer,
+        authenticated: authenticated,
+      };
+      addTilesetFromMapInfo(viewer, mapInfo, setMapTilesLoaded);
+    }
+
+    // If it has a discovery service, add it to the list of discoveryServices.
+    const discoveryService = mapServer.getService("discovery");
+    if (discoveryService) {
+      console.info(
+        "Discovery service found. It will be used for map discovery.",
+      );
+    }
+
+    if (!tileService && !discoveryService) {
+      console.warn(
+        "No valid tileserver or discovery service found in the provided URL.",
+      );
+    }
+  });
+}
+
 export {
   discoverMapsDNS,
   discoverMapsServices,
   getTileSetService,
   getFullUrl,
   checkAuthentication,
+  AddMapServer,
 };

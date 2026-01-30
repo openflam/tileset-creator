@@ -66,3 +66,123 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+/* Map Sidebar Grouping Styles (Light Theme) */
+
+/* Ensure accordion resets */
+.accordion-item {
+  background-color: transparent;
+  border: none;
+}
+
+/* Main Accordion Button - Light */
+.accordion-button {
+  background-color: #f8f9fa;
+  color: #212529;
+  border: 1px solid #dee2e6;
+  box-shadow: none !important;
+  border-radius: 6px !important;
+  margin-bottom: 4px;
+}
+
+.accordion-button:not(.collapsed) {
+  background-color: #e9ecef;
+  color: #000;
+  box-shadow: inset 0 -1px 0 rgba(0,0,0,.125);
+}
+
+/* Building Group */
+.building-group > .accordion-item > .accordion-header .accordion-button {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+/* Unknown Building - distinct greyish but light */
+.unknown-building-header .accordion-button {
+  background-color: #e2e3e5;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.unknown-building-header .accordion-button:not(.collapsed) {
+  background-color: #d6d8db;
+  color: #495057;
+}
+
+/* Nested Floor Groups */
+.floor-group {
+    margin-left: 8px;
+    border-left: 2px solid #dee2e6;
+}
+
+.floor-group .accordion-button {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  background-color: #fff;
+  color: #495057;
+  border: 1px solid #dee2e6; /* Ensure border for nested */
+}
+
+.floor-group .accordion-button:not(.collapsed) {
+  background-color: #f1f3f5;
+  color: #212529;
+}
+
+/* Unknown Floor */
+.unknown-floor-header .accordion-button {
+  color: #adb5bd;
+  font-style: italic;
+}
+
+/* Compact Cards Overrides */
+.accordion-body .card {
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    margin-bottom: 0.5rem !important; /* Override mb-3 */
+    color: #212529; /* Force dark text for light card */
+}
+
+/* Compact padding */
+.accordion-body .card-body {
+    padding: 0.5rem;
+}
+
+/* Compact Image override */
+.accordion-body .card img {
+    width: 32px !important;
+    height: 32px !important;
+}
+
+/* Adjust text size */
+.accordion-body .card-title {
+    font-size: 0.95rem;
+}
+
+/* Compact Form elements */
+.accordion-body .form-check {
+    margin-bottom: 0.25rem !important;
+}
+
+/* Map Group Visibility Toggle (Split Header) */
+.map-group-visibility-toggle {
+    cursor: pointer;
+    padding: 0.75rem;
+    background-color: #f8f9fa; /* var(--bs-accordion-btn-bg) */
+    border: 1px solid #dee2e6;
+    border-right: none;
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+    color: #0d6efd; /* var(--bs-primary) - Visible state */
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out;
+}
+
+.map-group-visibility-toggle.hidden {
+    color: #6c757d; /* Muted - Hidden state */
+}
+
+.map-group-visibility-toggle:hover {
+    background-color: #e9ecef; /* match accordion-button hover */
+}

@@ -2,14 +2,15 @@ import { Viewer, Cartesian3 } from "cesium";
 import { useState } from "react";
 import { Button, Form } from "react-bootstrap";
 import { createLabel } from "../utils/cesium/label";
-import MapInfoAuth from "./map-info/MapInfoAuth";
-import MapInfoDefault from "./map-info/MapInfoDefault";
-import MapInfoCustom from "./map-info/MapInfoCustom";
 import { type CameraViewData } from "../utils/cesium/camera-utils";
-import AddGLBModal from "./modals/AddGLBModal";
-import AddMapServerModal from "./modals/AddMapServerModal";
-import CameraInfoModal from "./modals/CameraInfoModal";
 import { type LabelInfo } from "./labels/LabelCard";
+import SidebarMapList from "./SidebarMapList";
+import MapInfoCustom from "./MapInfoCustom";
+import AddGLBModal from "./AddGLBModal";
+import AddMapServerModal from "./AddMapServerModal";
+import SelectMapModal from "./SelectMapModal";
+import CameraInfoModal from "./modals/CameraInfoModal";
+import CONFIG from "../config";
 
 type propsType = {
   mapTilesLoaded: MapTilesLoaded;
@@ -37,7 +38,9 @@ function SideBar({
   const [showAddGLBModal, setShowAddGLBModal] = useState(false);
   const [showAddMapServerModal, setShowAddMapServerModal] = useState(false);
   const [showCameraInfoModal, setShowCameraInfoModal] = useState(false);
-  const [editEnabled, setEditEnabled] = useState(false);
+  const [showSelectMapModal, setShowSelectMapModal] = useState(false);
+  const [editEnabled, setEditEnabled] = useState(CONFIG.MODE === "map-server");
+  const [editingMap, setEditingMap] = useState<MapInfo | null>(null);
 
 
   const handleLabelCreated = (labelInfo: LabelInfo) => {
@@ -201,77 +204,29 @@ function SideBar({
           checked={discoverEnabled}
           label="Discover"
           className="me-3"
-          onClick={() => setDiscoverEnabled(!discoverEnabled)}
+          onChange={() => setDiscoverEnabled(!discoverEnabled)}
         />
+
         <Form.Check
           type="switch"
           checked={editEnabled}
           label="Edit"
-          onClick={() => setEditEnabled(!editEnabled)}
+          onChange={() => setEditEnabled(!editEnabled)}
         />
       </div>
 
       <>
-        {Object.entries(mapTilesLoaded)
-          .filter(
-            ([_, mapInfo]) =>
-              !mapInfo.authenticated && mapInfo.type === "default",
-          )
-          .map(([url, mapInfo]) => (
-            <MapInfoAuth key={url} mapInfo={mapInfo} />
-          ))}
+        <SidebarMapList
+          mapTilesLoaded={mapTilesLoaded}
+          viewer={viewer}
+          setEditingMap={setEditingMap}
+        />
 
-        {Object.entries(mapTilesLoaded)
-          .filter(
-            ([_, mapInfo]) =>
-              mapInfo.tile &&
-              mapInfo.type === "default" &&
-              mapInfo.authenticated,
-          )
-          .map(([url, mapInfo]) => {
-            // Check if this is the Google tileset
-            const isGoogle = mapInfo.name === 'Google' || mapInfo.commonName === 'Google';
-            
-            return (
-              <MapInfoDefault 
-                key={url} 
-                mapInfo={mapInfo}
-                externalOpacity={isGoogle ? googleOpacity : undefined}
-                onOpacityChange={isGoogle ? onGoogleOpacityChange : undefined}
-                onAddLabel={handleAddLabelFromCamera}
-                viewer={viewer}
-                labels={labels}
-                mapUrl={url}
-                onDeleteLabel={handleDeleteLabel}
-                onLabelPositionChange={handleLabelPositionChange}
-                onDeleteAllLabels={handleDeleteAllLabels}
-                onSubmitLabels={handleSubmitLabels}
-                editEnabled={editEnabled}
-              />
-            );
-          })}
-
-        {Object.entries(mapTilesLoaded)
-          .filter(([_, mapInfo]) => mapInfo.tile && mapInfo.type === "custom")
-          .map(([url, mapInfo]) => (
-            <MapInfoCustom 
-              key={url} 
-              mapInfo={mapInfo} 
-              onAddLabel={handleAddLabelFromCamera} 
-              viewer={viewer} 
-              labels={labels} 
-              mapUrl={url}
-              onDeleteLabel={handleDeleteLabel}
-              onLabelPositionChange={handleLabelPositionChange}
-              onDeleteAllLabels={handleDeleteAllLabels}
-              onSubmitLabels={handleSubmitLabels}
-              editEnabled={editEnabled}
-            />
-          ))}
+        {CONFIG.MODE === "map-server" && editingMap && (
+          <MapInfoCustom key={editingMap.url} mapInfo={editingMap} viewer={viewer} />
+        )}
       </>
-
-
-      {editEnabled && (
+      {editEnabled && CONFIG.MODE === "global" && (
         <>
           <Button
             variant="info"
@@ -300,17 +255,37 @@ function SideBar({
         </>
       )}
 
-      <CameraInfoModal
-        show={showCameraInfoModal}
-        onClose={() => setShowCameraInfoModal(false)}
-        viewer={viewer}
-      />
+      {editEnabled && CONFIG.MODE === "global" && (
+        <CameraInfoModal
+          show={showCameraInfoModal}
+          onClose={() => setShowCameraInfoModal(false)}
+          viewer={viewer}
+        />
+      )}
+
+      {editEnabled && CONFIG.MODE === "map-server" && (
+        <Button
+          variant="primary"
+          className="w-100 mt-3"
+          onClick={() => setShowSelectMapModal(true)}
+        >
+          List Unpublished Maps
+        </Button>
+      )}
 
       <AddGLBModal
         show={showAddGLBModal}
         onClose={() => setShowAddGLBModal(false)}
         viewer={viewer}
         setMapTilesLoaded={setMapTilesLoaded}
+      />
+
+      <SelectMapModal
+        show={showSelectMapModal}
+        onClose={() => setShowSelectMapModal(false)}
+        viewer={viewer}
+        setMapTilesLoaded={setMapTilesLoaded}
+        setEditingMap={setEditingMap}
       />
 
       <AddMapServerModal
