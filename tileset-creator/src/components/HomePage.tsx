@@ -40,8 +40,6 @@ function HomePage() {
       viewer={viewer}
       discoverEnabled={discoverEnabled}
       setDiscoverEnabled={setDiscoverEnabled}
-      googleOpacity={googleOpacity}
-      onGoogleOpacityChange={setGoogleOpacity}
     />
   ) : null;
 

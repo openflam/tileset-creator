@@ -15,8 +15,6 @@ type propsType = {
   viewer: Viewer;
   discoverEnabled: boolean;
   setDiscoverEnabled: React.Dispatch<React.SetStateAction<boolean>>;
-  googleOpacity: number;
-  onGoogleOpacityChange: (opacity: number) => void;
 };
 
 function SideBar({
@@ -25,8 +23,6 @@ function SideBar({
   viewer,
   discoverEnabled,
   setDiscoverEnabled,
-  googleOpacity,
-  onGoogleOpacityChange,
 }: propsType) {
   const [showAddGLBModal, setShowAddGLBModal] = useState(false);
   const [showAddMapServerModal, setShowAddMapServerModal] = useState(false);
@@ -70,19 +66,14 @@ function SideBar({
                   mapInfo.type === "default" &&
                   mapInfo.authenticated,
               )
-              .map(([url, mapInfo]) => {
-                // Check if this is the Google tileset
-                const isGoogle = mapInfo.name === 'Google' || mapInfo.commonName === 'Google';
-                
-                return (
+              .map(([url, mapInfo]) => (
                   <MapInfoDefault 
                     key={url} 
                     mapInfo={mapInfo}
                     setEditingMap={CONFIG.MODE === "map-server" ? setEditingMap : undefined}
                     onVisibilityChange={() => {}}
                   />
-                );
-              })}
+              ))}
 
             {Object.entries(mapTilesLoaded)
               .filter(([_, mapInfo]) => mapInfo.tile && mapInfo.type === "custom")
