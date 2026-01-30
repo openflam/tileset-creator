@@ -96,9 +96,11 @@ function addDefaultTiles(
   }
   // Add Google photorealistic tileset as a default map.
   const defaultMapInfo: MapInfo = CONFIG.GOOGLE_3D_TILES;
-  addTilesetFromMapInfo(viewer, defaultMapInfo, setMapTilesLoaded).catch((error) => {
-    console.error("Error adding default tiles:", error);
-  });
+  addTilesetFromMapInfo(viewer, defaultMapInfo, setMapTilesLoaded).catch(
+    (error) => {
+      console.error("Error adding default tiles:", error);
+    },
+  );
 }
 
 export { discoverAndAddTiles, addDefaultTiles };

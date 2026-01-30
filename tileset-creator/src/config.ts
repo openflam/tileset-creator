@@ -28,7 +28,7 @@ const CONFIG: ConfigType = {
     const envUrls = import.meta.env.VITE_NOMINATIM_API_URLS;
     if (envUrls) {
       // Support comma-separated URLs in environment variable
-      return envUrls.split(',').map((url: string) => url.trim());
+      return envUrls.split(",").map((url: string) => url.trim());
     }
     // Fallback to single URL for backward compatibility
     const singleUrl = import.meta.env.VITE_NOMINATIM_API_URL;

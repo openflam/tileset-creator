@@ -16,7 +16,9 @@ async function addTilesetFromMapInfo(
   setMapTilesLoaded: React.Dispatch<React.SetStateAction<MapTilesLoaded>>,
 ): Promise<Cesium3DTileset | CesiumModel | null> {
   if (!viewer || !viewer.scene) {
-    console.error("Cannot add tileset: viewer is not initialized or scene is not available");
+    console.error(
+      "Cannot add tileset: viewer is not initialized or scene is not available",
+    );
     return null;
   }
 

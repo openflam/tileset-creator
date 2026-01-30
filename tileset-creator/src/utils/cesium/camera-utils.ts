@@ -1,7 +1,7 @@
-import { Viewer, Math as CesiumMath, Cartesian3, Rectangle } from 'cesium';
+import { Viewer, Math as CesiumMath, Cartesian3, Rectangle } from "cesium";
 
 export interface CameraViewData {
-  type: 'CameraView';
+  type: "CameraView";
   position: {
     longitude: number;
     latitude: number;
@@ -25,20 +25,26 @@ export interface CameraViewData {
 /**
  * Fly the camera to a specific view defined by camera data
  */
-export function flyToCameraView(viewer: Viewer, viewData: CameraViewData, duration: number = 2.0): Promise<void> {
+export function flyToCameraView(
+  viewer: Viewer,
+  viewData: CameraViewData,
+  duration: number = 2.0,
+): Promise<void> {
   return new Promise((resolve, reject) => {
     try {
-      console.log('📹 Starting flyToCameraView:', {
+      console.log("📹 Starting flyToCameraView:", {
         viewType: viewData.type,
         position: viewData.position,
         orientation: viewData.orientation,
         duration: duration,
-        description: viewData.description || 'No description'
+        description: viewData.description || "No description",
       });
 
       if (!viewData.position || !viewData.orientation) {
-        const error = new Error('Invalid camera view data: missing position or orientation');
-        console.error('❌ flyToCameraView validation failed:', error.message);
+        const error = new Error(
+          "Invalid camera view data: missing position or orientation",
+        );
+        console.error("❌ flyToCameraView validation failed:", error.message);
         reject(error);
         return;
       }
@@ -46,21 +52,21 @@ export function flyToCameraView(viewer: Viewer, viewData: CameraViewData, durati
       const destination = Cartesian3.fromDegrees(
         viewData.position.longitude,
         viewData.position.latitude,
-        viewData.position.height
+        viewData.position.height,
       );
 
-      console.log('🚀 Initiating camera flight:', {
+      console.log("🚀 Initiating camera flight:", {
         destination: {
           longitude: viewData.position.longitude,
           latitude: viewData.position.latitude,
-          height: viewData.position.height
+          height: viewData.position.height,
         },
         orientation: {
           heading: `${viewData.orientation.heading}° (${CesiumMath.toRadians(viewData.orientation.heading)} rad)`,
           pitch: `${viewData.orientation.pitch}° (${CesiumMath.toRadians(viewData.orientation.pitch)} rad)`,
-          roll: `${viewData.orientation.roll}° (${CesiumMath.toRadians(viewData.orientation.roll)} rad)`
+          roll: `${viewData.orientation.roll}° (${CesiumMath.toRadians(viewData.orientation.roll)} rad)`,
         },
-        duration: `${duration}s`
+        duration: `${duration}s`,
       });
 
       const startTime = Date.now();
@@ -70,35 +76,35 @@ export function flyToCameraView(viewer: Viewer, viewData: CameraViewData, durati
         orientation: {
           heading: CesiumMath.toRadians(viewData.orientation.heading),
           pitch: CesiumMath.toRadians(viewData.orientation.pitch),
-          roll: CesiumMath.toRadians(viewData.orientation.roll)
+          roll: CesiumMath.toRadians(viewData.orientation.roll),
         },
         duration,
         complete: () => {
           const flightTime = Date.now() - startTime;
-          console.log('✅ Camera flight completed successfully:', {
+          console.log("✅ Camera flight completed successfully:", {
             actualDuration: `${flightTime}ms`,
             expectedDuration: `${duration * 1000}ms`,
             finalPosition: viewData.position,
-            finalOrientation: viewData.orientation
+            finalOrientation: viewData.orientation,
           });
           resolve();
         },
         cancel: () => {
           const flightTime = Date.now() - startTime;
-          const error = new Error('Camera flight was cancelled');
-          console.warn('⚠️ Camera flight was cancelled:', {
+          const error = new Error("Camera flight was cancelled");
+          console.warn("⚠️ Camera flight was cancelled:", {
             partialDuration: `${flightTime}ms`,
             expectedDuration: `${duration * 1000}ms`,
-            targetPosition: viewData.position
+            targetPosition: viewData.position,
           });
           reject(error);
-        }
+        },
       });
     } catch (error) {
-      console.error('❌ flyToCameraView error:', {
+      console.error("❌ flyToCameraView error:", {
         error: error,
         viewData: viewData,
-        duration: duration
+        duration: duration,
       });
       reject(error);
     }
@@ -109,9 +115,9 @@ export function flyToCameraView(viewer: Viewer, viewData: CameraViewData, durati
  * Fly the camera to show a specific bounding box
  */
 export function flyToBoundingBox(
-  viewer: Viewer, 
+  viewer: Viewer,
   boundingBox: { west: number; south: number; east: number; north: number },
-  duration: number = 2.0
+  duration: number = 2.0,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     try {
@@ -119,14 +125,14 @@ export function flyToBoundingBox(
         boundingBox.west,
         boundingBox.south,
         boundingBox.east,
-        boundingBox.north
+        boundingBox.north,
       );
 
       viewer.camera.flyTo({
         destination: rectangle,
         duration,
         complete: () => resolve(),
-        cancel: () => reject(new Error('Camera flight was cancelled'))
+        cancel: () => reject(new Error("Camera flight was cancelled")),
       });
     } catch (error) {
       reject(error);
@@ -145,7 +151,7 @@ export function flyToLocation(
   heading: number = 0,
   pitch: number = -45,
   roll: number = 0,
-  duration: number = 2.0
+  duration: number = 2.0,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     try {
@@ -156,11 +162,11 @@ export function flyToLocation(
         orientation: {
           heading: CesiumMath.toRadians(heading),
           pitch: CesiumMath.toRadians(pitch),
-          roll: CesiumMath.toRadians(roll)
+          roll: CesiumMath.toRadians(roll),
         },
         duration,
         complete: () => resolve(),
-        cancel: () => reject(new Error('Camera flight was cancelled'))
+        cancel: () => reject(new Error("Camera flight was cancelled")),
       });
     } catch (error) {
       reject(error);
@@ -171,14 +177,17 @@ export function flyToLocation(
 /**
  * Get current camera view data
  */
-export function getCurrentCameraView(viewer: Viewer, description?: string): CameraViewData | null {
+export function getCurrentCameraView(
+  viewer: Viewer,
+  description?: string,
+): CameraViewData | null {
   try {
     const camera = viewer.camera;
     const scene = viewer.scene;
-    
+
     // Get camera position
     const cameraPosition = camera.positionCartographic;
-    
+
     // Get camera orientation
     const heading = CesiumMath.toDegrees(camera.heading);
     const pitch = CesiumMath.toDegrees(camera.pitch);
@@ -190,51 +199,71 @@ export function getCurrentCameraView(viewer: Viewer, description?: string): Came
     const height = canvas.clientHeight;
 
     // Get corners of the screen
-    const topLeft = camera.pickEllipsoid(new Cartesian3(0, 0, 0), scene.globe.ellipsoid);
-    const topRight = camera.pickEllipsoid(new Cartesian3(width, 0, 0), scene.globe.ellipsoid);
-    const bottomLeft = camera.pickEllipsoid(new Cartesian3(0, height, 0), scene.globe.ellipsoid);
-    const bottomRight = camera.pickEllipsoid(new Cartesian3(width, height, 0), scene.globe.ellipsoid);
+    const topLeft = camera.pickEllipsoid(
+      new Cartesian3(0, 0, 0),
+      scene.globe.ellipsoid,
+    );
+    const topRight = camera.pickEllipsoid(
+      new Cartesian3(width, 0, 0),
+      scene.globe.ellipsoid,
+    );
+    const bottomLeft = camera.pickEllipsoid(
+      new Cartesian3(0, height, 0),
+      scene.globe.ellipsoid,
+    );
+    const bottomRight = camera.pickEllipsoid(
+      new Cartesian3(width, height, 0),
+      scene.globe.ellipsoid,
+    );
 
     let boundingBox = {
       west: -180,
       south: -90,
       east: 180,
-      north: 90
+      north: 90,
     };
 
     // If we can pick points on the ellipsoid, calculate actual bounds
-    const corners = [topLeft, topRight, bottomLeft, bottomRight].filter(corner => corner !== undefined);
+    const corners = [topLeft, topRight, bottomLeft, bottomRight].filter(
+      (corner) => corner !== undefined,
+    );
     if (corners.length > 0) {
-      const cartographics = corners.map(corner => scene.globe.ellipsoid.cartesianToCartographic(corner!));
-      const longitudes = cartographics.map(c => CesiumMath.toDegrees(c.longitude));
-      const latitudes = cartographics.map(c => CesiumMath.toDegrees(c.latitude));
+      const cartographics = corners.map((corner) =>
+        scene.globe.ellipsoid.cartesianToCartographic(corner!),
+      );
+      const longitudes = cartographics.map((c) =>
+        CesiumMath.toDegrees(c.longitude),
+      );
+      const latitudes = cartographics.map((c) =>
+        CesiumMath.toDegrees(c.latitude),
+      );
 
       boundingBox = {
         west: Math.min(...longitudes),
         south: Math.min(...latitudes),
         east: Math.max(...longitudes),
-        north: Math.max(...latitudes)
+        north: Math.max(...latitudes),
       };
     }
 
     return {
-      type: 'CameraView',
+      type: "CameraView",
       position: {
         longitude: CesiumMath.toDegrees(cameraPosition.longitude),
         latitude: CesiumMath.toDegrees(cameraPosition.latitude),
-        height: cameraPosition.height
+        height: cameraPosition.height,
       },
       orientation: {
         heading,
         pitch,
-        roll
+        roll,
       },
       boundingBox,
       timestamp: new Date().toISOString(),
-      description
+      description,
     };
   } catch (error) {
-    console.error('Error getting current camera view:', error);
+    console.error("Error getting current camera view:", error);
     return null;
   }
 }
@@ -244,15 +273,15 @@ export function getCurrentCameraView(viewer: Viewer, description?: string): Came
  */
 export function parseCameraViewData(jsonString: string): CameraViewData {
   const data = JSON.parse(jsonString);
-  
-  if (data.type !== 'CameraView') {
-    throw new Error('Invalid data type. Expected CameraView.');
+
+  if (data.type !== "CameraView") {
+    throw new Error("Invalid data type. Expected CameraView.");
   }
-  
+
   if (!data.position || !data.orientation) {
-    throw new Error('Invalid camera view data: missing required fields');
+    throw new Error("Invalid camera view data: missing required fields");
   }
-  
+
   return data as CameraViewData;
 }
 

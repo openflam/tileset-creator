@@ -1,5 +1,5 @@
-import { Rectangle, Credit, Resource } from 'cesium';
-import CONFIG from '../../config';
+import { Rectangle, Credit, Resource } from "cesium";
+import CONFIG from "../../config";
 
 const API_URL = "https://maps.googleapis.com/maps/api/geocode/json";
 const CREDIT_HTML = `<a href="https://developers.google.com/maps" target="_blank">© Google Maps</a>`;
@@ -19,7 +19,6 @@ function GoogleGeocoderService(this: any) {
 
   this._credit = new Credit(CREDIT_HTML, true);
   this._lastResults = []; // Store last results to access altitude data
-  
 }
 
 Object.defineProperties(GoogleGeocoderService.prototype, {
@@ -52,14 +51,18 @@ GoogleGeocoderService.prototype.geocode = async function (query: string) {
   try {
     const response = await resource.fetchJson();
 
-    if (response.status !== 'OK' || !response.results || response.results.length === 0) {
+    if (
+      response.status !== "OK" ||
+      !response.results ||
+      response.results.length === 0
+    ) {
       return [];
     }
-    
+
     const results = response.results.slice(0, 5).map((result: any) => {
       const location = result.geometry.location;
       const viewport = result.geometry.viewport;
-      
+
       // Create a rectangle from the viewport or a small area around the point
       let rectangle;
       if (viewport) {
@@ -67,7 +70,7 @@ GoogleGeocoderService.prototype.geocode = async function (query: string) {
           viewport.southwest.lng,
           viewport.southwest.lat,
           viewport.northeast.lng,
-          viewport.northeast.lat
+          viewport.northeast.lat,
         );
       } else {
         // Create a small rectangle around the point if no viewport
@@ -78,7 +81,7 @@ GoogleGeocoderService.prototype.geocode = async function (query: string) {
           lng - offset,
           lat - offset,
           lng + offset,
-          lat + offset
+          lat + offset,
         );
       }
 
@@ -104,12 +107,12 @@ GoogleGeocoderService.prototype.geocode = async function (query: string) {
 
     // Store the results for later access (for altitude data)
     this._lastResults = results;
-    
+
     return results;
   } catch (error) {
-    console.error('Google geocoding error:', error);
+    console.error("Google geocoding error:", error);
     return [];
   }
 };
 
-export default GoogleGeocoderService; 
+export default GoogleGeocoderService;

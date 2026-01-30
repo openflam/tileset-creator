@@ -1,10 +1,4 @@
-import {
-  Viewer,
-  Camera,
-  Rectangle,
-  Color as CesiumColor,
-  Ion,
-} from "cesium";
+import { Viewer, Camera, Rectangle, Color as CesiumColor, Ion } from "cesium";
 import { MapsDiscovery } from "@openflam/dnsspatialdiscovery";
 import { useEffect, useRef, useState } from "react";
 
@@ -12,7 +6,7 @@ import {
   discoverAndAddTiles,
   addDefaultTiles,
 } from "../utils/discover-add-tiles";
-import CustomSearchBar from './search/CustomSearchBar';
+import CustomSearchBar from "./search/CustomSearchBar";
 import CONFIG from "../config";
 
 async function createViewer(
@@ -153,16 +147,16 @@ function CesiumViewer({
   }, []);
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
-      <div ref={viewerRef} style={{ width: '100%', height: '100%' }} />
-             <CustomSearchBar 
-                 viewer={viewer} 
-                 mapTilesLoaded={mapTilesLoaded}
-                 mapsDiscoveryObj={mapsDiscoveryObj}
-                 mapTilesLoadedRef={mapTilesLoadedRef}
-                 setMapTilesLoaded={setMapTilesLoaded}
-                 setGoogleOpacity={setGoogleOpacity}
-             />
+    <div style={{ position: "relative", width: "100%", height: "100vh" }}>
+      <div ref={viewerRef} style={{ width: "100%", height: "100%" }} />
+      <CustomSearchBar
+        viewer={viewer}
+        mapTilesLoaded={mapTilesLoaded}
+        mapsDiscoveryObj={mapsDiscoveryObj}
+        mapTilesLoadedRef={mapTilesLoadedRef}
+        setMapTilesLoaded={setMapTilesLoaded}
+        setGoogleOpacity={setGoogleOpacity}
+      />
     </div>
   );
 }

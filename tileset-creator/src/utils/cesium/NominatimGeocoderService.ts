@@ -1,5 +1,5 @@
-import { Rectangle, Credit, Resource } from 'cesium';
-import CONFIG from '../../config';
+import { Rectangle, Credit, Resource } from "cesium";
+import CONFIG from "../../config";
 
 const CREDIT_HTML = `<a href="https://nominatim.openstreetmap.org/" target="_blank">© OpenStreetMap contributors</a>`;
 
@@ -10,7 +10,7 @@ const CREDIT_HTML = `<a href="https://nominatim.openstreetmap.org/" target="_bla
 function NominatimGeocoderService(this: any, serverIndex: number = 0) {
   const apiUrls = CONFIG.NOMINATIM_API_URLS;
   const selectedUrl = apiUrls[serverIndex] || apiUrls[0]; // Fallback to first URL if index is out of bounds
-  
+
   this._serverIndex = serverIndex;
   this._apiUrls = apiUrls;
   this._resource = new Resource({
@@ -36,7 +36,6 @@ function NominatimGeocoderService(this: any, serverIndex: number = 0) {
   this._credit = new Credit(CREDIT_HTML, true);
   this._lastResults = []; // Store last results to access altitude data
   this._lastRawResponse = []; // Store last raw response from API
-  
 }
 
 Object.defineProperties(NominatimGeocoderService.prototype, {
@@ -75,7 +74,7 @@ NominatimGeocoderService.prototype.geocode = async function (query: string) {
     if (!Array.isArray(response) || response.length === 0) {
       return [];
     }
-    
+
     const results = response.map((result: any) => {
       const west = parseFloat(result.boundingbox[2]);
       const south = parseFloat(result.boundingbox[0]);
@@ -84,7 +83,7 @@ NominatimGeocoderService.prototype.geocode = async function (query: string) {
 
       // Extract altitude from OSM tags or result data
       let altitude = 1000; // Default altitude
-      
+
       // Store the raw result data for later access
       result._rawNominatimData = result;
 
@@ -93,7 +92,7 @@ NominatimGeocoderService.prototype.geocode = async function (query: string) {
         altitude = parseFloat(result.altitude);
       } else if (result.extratags && result.extratags.height) {
         altitude = parseFloat(result.extratags.height);
-        console.log('📏 Found height in extratags:', altitude);
+        console.log("📏 Found height in extratags:", altitude);
       } else if (result.osm_type && result.osm_id) {
         // Mark for details lookup if no height found
         result._needsDetailsLookup = true;
@@ -111,22 +110,22 @@ NominatimGeocoderService.prototype.geocode = async function (query: string) {
         serverInfo: {
           serverIndex: this._serverIndex,
           serverUrl: this._resource.url,
-          source: 'nominatim'
+          source: "nominatim",
         },
         // Store raw Nominatim data for debugging
-        _rawNominatimData: result._rawNominatimData
+        _rawNominatimData: result._rawNominatimData,
       };
     });
 
     // Store the results for later access (for altitude data)
     this._lastResults = results;
-    
+
     // Try to fetch details for results that need height data
     const resultsWithDetails = await this._enrichResultsWithDetails(results);
-    
+
     return resultsWithDetails;
   } catch (error) {
-    console.error('Nominatim geocoding error:', error);
+    console.error("Nominatim geocoding error:", error);
     return [];
   }
 };
@@ -134,61 +133,63 @@ NominatimGeocoderService.prototype.geocode = async function (query: string) {
 /**
  * Enrich search results with detailed OSM tag data if needed
  */
-NominatimGeocoderService.prototype._enrichResultsWithDetails = async function(results: any[]) {
+NominatimGeocoderService.prototype._enrichResultsWithDetails = async function (
+  results: any[],
+) {
   const enrichedResults = [];
-  
+
   for (const result of results) {
     if (result._needsDetailsLookup && result.osm_type && result.osm_id) {
       try {
         // Create details API request
         const detailsResource = this._resource.getDerivedResource({
-          url: this._resource.url.replace('/search', '/details.php'),
+          url: this._resource.url.replace("/search", "/details.php"),
           queryParameters: {
-            format: 'json',
+            format: "json",
             osmtype: result.osm_type.charAt(0).toUpperCase(),
             osmid: result.osm_id,
             addressdetails: 1,
             extratags: 1,
-            namedetails: 1
-          }
+            namedetails: 1,
+          },
         });
-        
+
         const detailsResponse = await detailsResource.fetchJson();
-        
+
         if (detailsResponse && detailsResponse.extratags) {
           // Update altitude if height data is found
           if (detailsResponse.extratags.height) {
             result.altitude = parseFloat(detailsResponse.extratags.height);
-            console.log('📏 Found height in details:', result.altitude);
+            console.log("📏 Found height in details:", result.altitude);
           }
-          
+
           result.extratags = detailsResponse.extratags;
         }
       } catch (error) {
         // Silently continue if details fetch fails
       }
     }
-    
+
     // Clean up the temporary flag
     delete result._needsDetailsLookup;
     enrichedResults.push(result);
   }
-  
+
   return enrichedResults;
 };
 
 /**
  * Get the number of configured Nominatim servers
  */
-NominatimGeocoderService.getServerCount = function() {
+NominatimGeocoderService.getServerCount = function () {
   return CONFIG.NOMINATIM_API_URLS.length;
 };
 
 /**
  * Get all configured Nominatim server URLs
  */
-NominatimGeocoderService.getServerUrls = function() {
+NominatimGeocoderService.getServerUrls = function () {
   return [...CONFIG.NOMINATIM_API_URLS];
 };
 
-export default NominatimGeocoderService; 
+export default NominatimGeocoderService;
