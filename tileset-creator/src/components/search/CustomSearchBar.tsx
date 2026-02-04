@@ -78,27 +78,6 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({
     return () => clearTimeout(timeoutId);
   }, [query, isResultSelected]);
 
-  // Define CICFloorTwo specific camera view
-  const CIC_FLOOR_TWO_VIEW = {
-    type: "CameraView" as const,
-    position: {
-      longitude: -79.9465556853944,
-      latitude: 40.44392979719272,
-      height: 310.5699480100303,
-    },
-    orientation: {
-      heading: 10.691949943776875,
-      pitch: -84.13735772439017,
-      roll: 0.0007967919396861882,
-    },
-    boundingBox: {
-      west: -79.9488263160273,
-      south: 40.442440905642364,
-      east: -79.94385645418721,
-      north: 40.44620178934592,
-    },
-    timestamp: "2025-09-18T16:49:28.005Z",
-  };
 
   // Function to generate camera view from search result data
   const generateCameraViewFromResult = (result: SearchResult) => {
@@ -236,74 +215,28 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({
       result._rawNominatimData.extratags &&
       result._rawNominatimData.extratags.height;
 
-    // Special case: CICFloorTwo should still use the predefined view
-    const resultName = result.displayName.toLowerCase();
-    const isCICFloorTwo =
-      resultName.includes("cicfloortwo") ||
-      resultName.includes("cic floor two") ||
-      resultName.includes("collaborative innovation center");
-
-    const isSpecialLocation = hasHeightInTags;
-
-    // Log for special locations only
-    if (isSpecialLocation) {
-      console.log("🎯 Special Location Selected (has height):", {
-        displayName: result.displayName,
-        altitude: result.altitude,
-        heightFromTags: result._rawNominatimData?.extratags?.height,
-      });
-    }
-
-    // Log raw Nominatim data when result is selected
-    if (result._rawNominatimData) {
-      console.log("🌐 Raw Nominatim Data for Selected Result:", {
-        selectedResult: result.displayName,
-        rawNominatimResponse: result._rawNominatimData,
-        hasExtratags: !!result._rawNominatimData.extratags,
-        hasHeight:
-          result._rawNominatimData.extratags &&
-          "height" in result._rawNominatimData.extratags,
-        hasEle:
-          result._rawNominatimData.extratags &&
-          "ele" in result._rawNominatimData.extratags,
-        allRawKeys: Object.keys(result._rawNominatimData),
-        extratags: result._rawNominatimData.extratags,
-        timestamp: new Date().toISOString(),
-      });
-    }
-
     // Fly to the selected location
     if (viewer) {
       try {
         // Cancel any ongoing camera flight before starting a new one
         if (typeof (viewer.camera as any).cancelFlight === "function") {
           (viewer.camera as any).cancelFlight();
-          console.log("🚫 Cancelled ongoing camera flight");
         }
 
-        if (isSpecialLocation) {
-          let cameraView;
-          let locationName = "";
-
-          if (isCICFloorTwo) {
-            cameraView = CIC_FLOOR_TWO_VIEW;
-            locationName = "CICFloorTwo";
-          } else {
-            // Generate camera view from search result data for locations with height
-            cameraView = generateCameraViewFromResult(result);
-            locationName = result.displayName;
-          }
+        if (hasHeightInTags) {
+          // Generate camera view from search result data for locations with height
+          const cameraView = generateCameraViewFromResult(result);
 
           // First fly to the destination, then apply opacity change
           flyToCameraView(viewer, cameraView)
             .then(() => {
-              // Reduce Google tileset opacity to 30% to make the special location more visible
+              // Reduce Google tileset opacity to make the location more visible
               setTimeout(() => {
                 setGoogleOpacity(0.1);
               }, 100);
             })
             .catch((err) => {
-              console.error(`Failed to fly to ${locationName}:`, err);
+              console.error(`Failed to fly to ${result.displayName}:`, err);
             });
         } else {
           // Restore Google tileset opacity to full for standard results

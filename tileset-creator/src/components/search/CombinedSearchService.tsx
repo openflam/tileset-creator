@@ -108,44 +108,68 @@ export class CombinedSearchService {
   }
 
   /**
-   * Search all configured Nominatim servers in parallel
+   * Wrap a promise with a timeout - returns fallback value if timeout is reached
+   */
+  private withTimeout<T>(
+    promise: Promise<T>,
+    timeoutMs: number,
+    fallbackValue: T,
+  ): Promise<T> {
+    return Promise.race([
+      promise,
+      new Promise<T>((resolve) => {
+        setTimeout(() => resolve(fallbackValue), timeoutMs);
+      }),
+    ]);
+  }
+
+  /**
+   * Search all configured Nominatim servers in parallel with timeout fallback
    */
   private async searchAllNominatimServers(
     query: string,
     signal?: AbortSignal,
   ): Promise<SearchResult[]> {
+    // Timeout per server (5 seconds) - if a server doesn't respond, continue without it
+    const SERVER_TIMEOUT_MS = 5000;
+
     try {
       // Check if search was cancelled
       if (signal?.aborted) {
         throw new Error("Search was cancelled");
       }
 
-      // Search all Nominatim servers in parallel
+      // Search all Nominatim servers in parallel with individual timeouts
       const nominatimPromises = this.nominatimServices.map(
         async (service, index) => {
-          try {
-            const results = await service.geocode(query);
-            return results
-              .slice(0, this.options.maxResultsPerSource)
-              .map((result: any) => ({
-                ...result,
-                source: "nominatim" as const,
-                sourceIcon: "🌍",
-                sourceColor: "#7cb342",
-                sourceName: `OpenStreetMap ${index + 1}`,
-                serverInfo: result.serverInfo || {
-                  serverIndex: index,
-                  source: "nominatim",
-                },
-              }));
-          } catch (error) {
-            console.error(`Nominatim server ${index} search error:`, error);
-            return [];
-          }
+          const serverSearch = async (): Promise<SearchResult[]> => {
+            try {
+              const results = await service.geocode(query);
+              return results
+                .slice(0, this.options.maxResultsPerSource)
+                .map((result: any) => ({
+                  ...result,
+                  source: "nominatim" as const,
+                  sourceIcon: "🌍",
+                  sourceColor: "#7cb342",
+                  sourceName: `OpenStreetMap ${index + 1}`,
+                  serverInfo: result.serverInfo || {
+                    serverIndex: index,
+                    source: "nominatim",
+                  },
+                }));
+            } catch (error) {
+              console.error(`Nominatim server ${index} search error:`, error);
+              return [];
+            }
+          };
+
+          // Wrap each server's search with a timeout
+          return this.withTimeout(serverSearch(), SERVER_TIMEOUT_MS, []);
         },
       );
 
-      // Wait for all Nominatim servers to respond
+      // Wait for all servers (they will resolve with empty array on timeout)
       const allNominatimResults = await Promise.all(nominatimPromises);
 
       // Flatten the results array
@@ -157,34 +181,40 @@ export class CombinedSearchService {
   }
 
   /**
-   * Search Google API using the custom Google geocoder service
+   * Search Google API using the custom Google geocoder service with timeout
    */
   private async searchGoogle(
     query: string,
     signal?: AbortSignal,
   ): Promise<SearchResult[]> {
-    try {
-      // Check if search was cancelled
-      if (signal?.aborted) {
-        throw new Error("Search was cancelled");
+    const GOOGLE_TIMEOUT_MS = 5000;
+
+    const googleSearch = async (): Promise<SearchResult[]> => {
+      try {
+        // Check if search was cancelled
+        if (signal?.aborted) {
+          throw new Error("Search was cancelled");
+        }
+
+        const results = await this.googleService.geocode(query);
+
+        return results
+          .slice(0, this.options.maxResultsPerSource)
+          .map((result: any) => ({
+            ...result,
+            source: "google" as const,
+            sourceIcon: "🗺️",
+            sourceColor: "#4285f4",
+            sourceName: "Google Maps",
+            googleData: result.googleData || {},
+          }));
+      } catch (error) {
+        console.error("Google search error:", error);
+        return [];
       }
+    };
 
-      const results = await this.googleService.geocode(query);
-
-      return results
-        .slice(0, this.options.maxResultsPerSource)
-        .map((result: any) => ({
-          ...result,
-          source: "google" as const,
-          sourceIcon: "🗺️",
-          sourceColor: "#4285f4",
-          sourceName: "Google Maps",
-          googleData: result.googleData || {},
-        }));
-    } catch (error) {
-      console.error("Google search error:", error);
-      return [];
-    }
+    return this.withTimeout(googleSearch(), GOOGLE_TIMEOUT_MS, []);
   }
 
   /**

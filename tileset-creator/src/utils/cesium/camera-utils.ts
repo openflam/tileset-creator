@@ -32,19 +32,10 @@ export function flyToCameraView(
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     try {
-      console.log("📹 Starting flyToCameraView:", {
-        viewType: viewData.type,
-        position: viewData.position,
-        orientation: viewData.orientation,
-        duration: duration,
-        description: viewData.description || "No description",
-      });
-
       if (!viewData.position || !viewData.orientation) {
         const error = new Error(
           "Invalid camera view data: missing position or orientation",
         );
-        console.error("❌ flyToCameraView validation failed:", error.message);
         reject(error);
         return;
       }
@@ -55,22 +46,6 @@ export function flyToCameraView(
         viewData.position.height,
       );
 
-      console.log("🚀 Initiating camera flight:", {
-        destination: {
-          longitude: viewData.position.longitude,
-          latitude: viewData.position.latitude,
-          height: viewData.position.height,
-        },
-        orientation: {
-          heading: `${viewData.orientation.heading}° (${CesiumMath.toRadians(viewData.orientation.heading)} rad)`,
-          pitch: `${viewData.orientation.pitch}° (${CesiumMath.toRadians(viewData.orientation.pitch)} rad)`,
-          roll: `${viewData.orientation.roll}° (${CesiumMath.toRadians(viewData.orientation.roll)} rad)`,
-        },
-        duration: `${duration}s`,
-      });
-
-      const startTime = Date.now();
-
       viewer.camera.flyTo({
         destination,
         orientation: {
@@ -80,32 +55,15 @@ export function flyToCameraView(
         },
         duration,
         complete: () => {
-          const flightTime = Date.now() - startTime;
-          console.log("✅ Camera flight completed successfully:", {
-            actualDuration: `${flightTime}ms`,
-            expectedDuration: `${duration * 1000}ms`,
-            finalPosition: viewData.position,
-            finalOrientation: viewData.orientation,
-          });
           resolve();
         },
         cancel: () => {
-          const flightTime = Date.now() - startTime;
           const error = new Error("Camera flight was cancelled");
-          console.warn("⚠️ Camera flight was cancelled:", {
-            partialDuration: `${flightTime}ms`,
-            expectedDuration: `${duration * 1000}ms`,
-            targetPosition: viewData.position,
-          });
           reject(error);
         },
       });
     } catch (error) {
-      console.error("❌ flyToCameraView error:", {
-        error: error,
-        viewData: viewData,
-        duration: duration,
-      });
+      console.error("❌ flyToCameraView error:", error);
       reject(error);
     }
   });

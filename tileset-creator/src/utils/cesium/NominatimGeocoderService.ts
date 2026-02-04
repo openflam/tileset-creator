@@ -89,7 +89,6 @@ NominatimGeocoderService.prototype.geocode = async function (query: string) {
         altitude = parseFloat(result.altitude);
       } else if (result.extratags && result.extratags.height) {
         altitude = parseFloat(result.extratags.height);
-        console.log("📏 Found height in extratags:", altitude);
       } else if (result.osm_type && result.osm_id) {
         // Mark for details lookup if no height found
         result._needsDetailsLookup = true;
@@ -157,9 +156,7 @@ NominatimGeocoderService.prototype._enrichResultsWithDetails = async function (
           // Update altitude if height data is found
           if (detailsResponse.extratags.height) {
             result.altitude = parseFloat(detailsResponse.extratags.height);
-            console.log("📏 Found height in details:", result.altitude);
           }
-
           result.extratags = detailsResponse.extratags;
         }
       } catch (error) {
