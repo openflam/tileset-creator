@@ -149,7 +149,7 @@ function MapInfoCustom({
     }
   };
 
-  const handleSubmit = () => {
+  const handleExport = () => {
     if (onSubmitLabels) {
       const mapLabels = labels.filter((label) => label.mapUrl === mapUrl);
       onSubmitLabels(mapUrl, mapLabels);
@@ -368,12 +368,12 @@ function MapInfoCustom({
                           Delete All
                         </Button>
                         <Button
-                          variant="success"
+                          variant="primary"
                           size="sm"
-                          onClick={handleSubmit}
+                          onClick={handleExport}
                           className="flex-fill"
                         >
-                          Submit
+                          Export
                         </Button>
                       </div>
                     </Col>

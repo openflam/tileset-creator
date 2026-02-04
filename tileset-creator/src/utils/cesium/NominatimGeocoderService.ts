@@ -22,9 +22,6 @@ function NominatimGeocoderService(this: any, serverIndex: number = 0) {
       namedetails: 1, // Include name details
       dedupe: 0, // Don't dedupe results
       polygon_geojson: 1, // Include polygon data
-      polygon_kml: 0,
-      polygon_svg: 0,
-      polygon_text: 0,
       limit: 5,
       "accept-language": "en", // Force English language results
     },

@@ -1,6 +1,5 @@
 import {
   Viewer,
-  IonGeocodeProviderType,
   Camera,
   Rectangle,
   Color as CesiumColor,

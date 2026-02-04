@@ -4,7 +4,6 @@ import { Button, Form } from "react-bootstrap";
 import { createLabel } from "../utils/cesium/label";
 import SidebarMapList from "./SidebarMapList";
 import MapInfoCustom from "./MapInfoCustom";
-import MapInfoDefault from "./MapInfoDefault";
 import AddGLBModal from "./AddGLBModal";
 import AddMapServerModal from "./AddMapServerModal";
 import SelectMapModal from "./SelectMapModal";
@@ -91,61 +90,61 @@ function SideBar({
     console.log(`🗑️ Deleted all labels for map: ${mapUrl}`);
   };
 
-  const handleSubmitLabels = async (mapUrl: string, mapLabels: LabelInfo[]) => {
-    console.log("📤 Submit labels for map:", mapUrl);
+  const handleExportLabels = (mapUrl: string, mapLabels: LabelInfo[]) => {
+    console.log("📤 Export labels for map:", mapUrl);
 
-    try {
-      const response = await fetch("/src/assets/data/example.json");
-      const existingData = await response.json();
-
-      const existingNodes = existingData.elements.filter(
-        (el: any) => el.type === "node",
-      );
-      const maxId = Math.max(
-        ...existingNodes.map((node: any) => node.id),
-        1000,
-      );
-
-      const newNodes = mapLabels.map((label, index) => ({
-        type: "node",
-        id: maxId + index + 1,
-        lat: label.position.latitude,
-        lon: label.position.longitude,
-        tags: {
-          indoor: "room",
-          level: "2",
-          ref: label.id,
-          name: label.name,
-          height: label.position.height.toString(),
-        },
-      }));
-
-      const updatedData = {
-        elements: [...existingData.elements, ...newNodes],
-      };
-
-      console.log("Updated data:", updatedData);
-
-      const dataStr = JSON.stringify(updatedData, null, 4);
-      const dataBlob = new Blob([dataStr], { type: "application/json" });
-      const url = URL.createObjectURL(dataBlob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "example.json";
-
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      URL.revokeObjectURL(url);
-
-      alert(
-        `✅ Added ${mapLabels.length} labels to example.json!\n\n📝 Instructions:\n1. The updated example.json has been downloaded\n2. Replace the file in src/assets/data/example.json\n3. The new labels have IDs starting from ${maxId + 1}`,
-      );
-    } catch (error) {
-      console.error("Error loading example.json:", error);
-      alert("❌ Error: Could not load example.json file");
+    if (mapLabels.length === 0) {
+      alert("No labels to export for this map.");
+      return;
     }
+
+    // Generate a base ID starting from 1001
+    const baseId = 1001;
+
+    const elements = mapLabels.map((label, index) => ({
+      type: "node",
+      id: baseId + index,
+      lat: label.position.latitude,
+      lon: label.position.longitude,
+      tags: {
+        indoor: "room",
+        level: "2",
+        ref: label.name,
+        name: label.name,
+        building: "university",
+        height: label.position.height.toFixed(2),
+        "building:levels": "3",
+        "addr:city": "Pittsburgh",
+        "addr:state": "PA",
+        "addr:country": "US",
+        amenity: "university",
+        operator: "Carnegie Mellon University",
+        description: `Label created at ${new Date().toISOString()}`,
+      },
+    }));
+
+    const exportData = { elements };
+
+    console.log("Export data:", exportData);
+
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement("a");
+    link.href = url;
+
+    // Generate filename from map name
+    const mapName = mapUrl.split("/").pop() || "labels";
+    const timestamp = new Date().toISOString().slice(0, 10);
+    link.download = `${mapName}-labels-${timestamp}.json`;
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
+
+    console.log(`✅ Exported ${mapLabels.length} labels to JSON file`);
   };
 
   const handleAddLabelFromCamera = (
@@ -222,66 +221,18 @@ function SideBar({
         <SidebarMapList
           mapTilesLoaded={mapTilesLoaded}
           viewer={viewer}
-          setEditingMap={setEditingMap}
+          labels={labels}
+          editEnabled={editEnabled}
+          onAddLabel={handleAddLabelFromCamera}
+          onDeleteLabel={handleDeleteLabel}
+          onLabelPositionChange={handleLabelPositionChange}
+          onDeleteAllLabels={handleDeleteAllLabels}
+          onSubmitLabels={handleExportLabels}
+          googleOpacity={googleOpacity}
+          onGoogleOpacityChange={onGoogleOpacityChange}
         />
 
-        {CONFIG.MODE === "global" && (
-          <>
-            {Object.entries(mapTilesLoaded)
-              .filter(
-                ([_, mapInfo]) =>
-                  mapInfo.tile &&
-                  mapInfo.type === "default" &&
-                  mapInfo.authenticated,
-              )
-              .map(([url, mapInfo]) => {
-                const isGoogle =
-                  mapInfo.name === "Google" || mapInfo.commonName === "Google";
-
-                return (
-                  <MapInfoDefault
-                    key={url}
-                    mapInfo={mapInfo}
-                    externalOpacity={isGoogle ? googleOpacity : undefined}
-                    onOpacityChange={
-                      isGoogle ? onGoogleOpacityChange : undefined
-                    }
-                    onAddLabel={handleAddLabelFromCamera}
-                    viewer={viewer}
-                    labels={labels}
-                    mapUrl={url}
-                    onDeleteLabel={handleDeleteLabel}
-                    onLabelPositionChange={handleLabelPositionChange}
-                    onDeleteAllLabels={handleDeleteAllLabels}
-                    onSubmitLabels={handleSubmitLabels}
-                    editEnabled={editEnabled}
-                  />
-                );
-              })}
-
-            {Object.entries(mapTilesLoaded)
-              .filter(
-                ([_, mapInfo]) => mapInfo.tile && mapInfo.type === "custom",
-              )
-              .map(([url, mapInfo]) => (
-                <MapInfoCustom
-                  key={url}
-                  mapInfo={mapInfo}
-                  onAddLabel={handleAddLabelFromCamera}
-                  viewer={viewer}
-                  labels={labels}
-                  mapUrl={url}
-                  onDeleteLabel={handleDeleteLabel}
-                  onLabelPositionChange={handleLabelPositionChange}
-                  onDeleteAllLabels={handleDeleteAllLabels}
-                  onSubmitLabels={handleSubmitLabels}
-                  editEnabled={editEnabled}
-                />
-              ))}
-          </>
-        )}
-
-        {CONFIG.MODE === "map-server" && editingMap && (
+        {CONFIG.MODE === "map-server" && editingMap && editingMap.url && (
           <MapInfoCustom
             key={editingMap.url}
             mapInfo={editingMap}
@@ -292,7 +243,7 @@ function SideBar({
             onDeleteLabel={handleDeleteLabel}
             onLabelPositionChange={handleLabelPositionChange}
             onDeleteAllLabels={handleDeleteAllLabels}
-            onSubmitLabels={handleSubmitLabels}
+            onSubmitLabels={handleExportLabels}
             editEnabled={editEnabled}
           />
         )}
