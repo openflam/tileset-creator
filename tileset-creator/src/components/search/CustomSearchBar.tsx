@@ -8,6 +8,7 @@ import { flyToCameraView } from "../../utils/cesium/camera-utils";
 import { Viewer, Rectangle, Math as CesiumMath } from "cesium";
 import "../../styles/CustomSearchBar.css";
 import { discoverAndAddTiles } from "../../utils/discover-add-tiles";
+import { getSearchServersFromMaps } from "../../utils/search-servers";
 
 interface CustomSearchBarProps {
   viewer: Viewer | null;
@@ -20,6 +21,7 @@ interface CustomSearchBarProps {
 
 const CustomSearchBar: React.FC<CustomSearchBarProps> = ({
   viewer,
+  mapTilesLoaded,
   mapsDiscoveryObj,
   mapTilesLoadedRef,
   setMapTilesLoaded,
@@ -47,41 +49,19 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({
   const combinedSearchService = useRef(
     new CombinedSearchService({
       maxResultsPerSource: 3,
-      enableNominatim: true,
       enableGoogle: true,
       deduplicateResults: true,
     }),
   );
 
-  // Debounce search - but only if no result was just selected
+  // Update search servers whenever discovered maps change
   useEffect(() => {
-    if (isResultSelected) {
-      // If a result was just selected, don't search
-      return;
-    }
-    const timeoutId = setTimeout(() => {
-      if (query.trim().length > 2) {
-        performSearch(query);
-      } else {
-        setResults([]);
-        setShowDropdown(false);
-        setSearchStats({
-          total: 0,
-          nominatim: 0,
-          google: 0,
-          servers: {},
-          serverDetails: [],
-        });
-      }
-    }, 300);
-
-    return () => clearTimeout(timeoutId);
-  }, [query, isResultSelected]);
-
+    const servers = getSearchServersFromMaps(mapTilesLoaded);
+    combinedSearchService.current.updateSearchServers(servers);
+  }, [mapTilesLoaded]);
 
   // Function to generate camera view from search result data
   const generateCameraViewFromResult = (result: SearchResult) => {
-    // Extract coordinates from the result
     let longitude = 0,
       latitude = 0,
       height = 300;
@@ -114,7 +94,7 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({
       },
       orientation: {
         heading: 0,
-        pitch: -89, // Top-down view
+        pitch: -89,
         roll: 0,
       },
       boundingBox: {
@@ -126,6 +106,30 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({
       timestamp: new Date().toISOString(),
     };
   };
+
+  // Debounce search
+  useEffect(() => {
+    if (isResultSelected) {
+      return;
+    }
+    const timeoutId = setTimeout(() => {
+      if (query.trim().length > 2) {
+        performSearch(query);
+      } else {
+        setResults([]);
+        setShowDropdown(false);
+        setSearchStats({
+          total: 0,
+          nominatim: 0,
+          google: 0,
+          servers: {},
+          serverDetails: [],
+        });
+      }
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [query, isResultSelected]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -145,12 +149,10 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({
   const performSearch = async (searchQuery: string) => {
     if (!searchQuery.trim()) return;
 
-    // Cancel any ongoing search
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
 
-    // Create new abort controller for this search
     abortControllerRef.current = new AbortController();
 
     setIsLoading(true);
@@ -163,8 +165,8 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({
       );
       setResults(searchResults);
 
-      // Get search statistics
-      const stats = combinedSearchService.current.getSearchStats(searchResults);
+      const stats =
+        combinedSearchService.current.getSearchStats(searchResults);
       setSearchStats(stats);
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
@@ -184,53 +186,41 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({
     }
   };
 
+  const emptyStats = {
+    total: 0,
+    nominatim: 0,
+    google: 0,
+    servers: {},
+    serverDetails: [],
+  };
+
   const handleResultSelect = (result: SearchResult) => {
-    // Cancel any ongoing search immediately
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
 
-    // Mark that a result was selected to prevent further searching
     setIsResultSelected(true);
-
-    // Close the dropdown immediately
     setShowDropdown(false);
-
-    // Clear results to prevent further searching
     setResults([]);
-    setSearchStats({
-      total: 0,
-      nominatim: 0,
-      google: 0,
-      servers: {},
-      serverDetails: [],
-    });
-
-    // Update the search input with the selected result AFTER clearing results
+    setSearchStats(emptyStats);
     setQuery(result.displayName);
 
-    // Check if this is a special location by looking for height in the raw Nominatim data
     const hasHeightInTags =
       result._rawNominatimData &&
       result._rawNominatimData.extratags &&
       result._rawNominatimData.extratags.height;
 
-    // Fly to the selected location
     if (viewer) {
       try {
-        // Cancel any ongoing camera flight before starting a new one
         if (typeof (viewer.camera as any).cancelFlight === "function") {
           (viewer.camera as any).cancelFlight();
         }
 
         if (hasHeightInTags) {
-          // Generate camera view from search result data for locations with height
           const cameraView = generateCameraViewFromResult(result);
 
-          // First fly to the destination, then apply opacity change
           flyToCameraView(viewer, cameraView)
             .then(() => {
-              // Reduce Google tileset opacity to make the location more visible
               setTimeout(() => {
                 setGoogleOpacity(0.1);
               }, 100);
@@ -239,10 +229,8 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({
               console.error(`Failed to fly to ${result.displayName}:`, err);
             });
         } else {
-          // Restore Google tileset opacity to full for standard results
           setGoogleOpacity(1.0);
 
-          // Use default search result navigation for other results
           flyToSearchResult(result, viewer);
           discoverAndAddTiles(
             viewer,
@@ -255,25 +243,14 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({
         console.error("Failed to fly to location:", err);
       }
     }
-
-    // Do not immediately reset the selection flag here.
-    // We only reset it when the user starts typing again.
   };
 
   const handleClear = () => {
-    // Restore Google tileset opacity to full when clearing
     setGoogleOpacity(1.0);
-
     setQuery("");
     setResults([]);
     setShowDropdown(false);
-    setSearchStats({
-      total: 0,
-      nominatim: 0,
-      google: 0,
-      servers: {},
-      serverDetails: [],
-    });
+    setSearchStats(emptyStats);
     setIsResultSelected(false);
 
     if (inputRef.current) {
@@ -282,10 +259,8 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newQuery = e.target.value;
-    // User is typing again; allow searches to resume
     setIsResultSelected(false);
-    setQuery(newQuery);
+    setQuery(e.target.value);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -302,25 +277,17 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({
       return "Google";
     }
 
-    // For Nominatim results, show server-specific names
-    if (result.serverInfo?.serverIndex !== undefined) {
-      const serverIndex = result.serverInfo.serverIndex;
-      const serverUrl = result.serverInfo.serverUrl;
+    if (result.sourceName) {
+      return result.sourceName;
+    }
 
-      // Extract domain or localhost info for display
+    if (result.serverInfo?.serverUrl) {
       try {
-        const url = new URL(serverUrl);
-        if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
-          return `OSM-${serverIndex + 1}`;
-        } else if (url.hostname === "nominatim.openstreetmap.org") {
-          return "OSM-Public";
-        } else {
-          // Extract first part of domain name
-          const domain = url.hostname.split(".")[0];
-          return `OSM-${domain}`;
-        }
+        const url = new URL(result.serverInfo.serverUrl);
+        const domain = url.hostname.split(".")[0];
+        return domain;
       } catch {
-        return `OSM-${serverIndex + 1}`;
+        return "OSM";
       }
     }
 
@@ -332,11 +299,9 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({
       return "🗺️";
     }
 
-    // Different icons for different OSM servers
     if (result.serverInfo?.serverIndex !== undefined) {
-      const serverIndex = result.serverInfo.serverIndex;
       const icons = ["🌍", "📍", "🏠", "🌎", "🌏", "🗺️", "🌐", "🌟"];
-      return icons[serverIndex % icons.length];
+      return icons[result.serverInfo.serverIndex % icons.length];
     }
 
     return "🌍";
@@ -347,9 +312,7 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({
       return "#4285f4";
     }
 
-    // Different colors for different OSM servers
     if (result.serverInfo?.serverIndex !== undefined) {
-      const serverIndex = result.serverInfo.serverIndex;
       const colors = [
         "#7cb342",
         "#2e7d32",
@@ -360,7 +323,7 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({
         "#a5d6a7",
         "#c8e6c9",
       ];
-      return colors[serverIndex % colors.length];
+      return colors[result.serverInfo.serverIndex % colors.length];
     }
 
     return "#7cb342";
@@ -432,9 +395,7 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({
                   Combined Search Results
                 </span>
                 <div className="custom-search-stats">
-                  {/* Individual server stats */}
                   {searchStats.serverDetails.map((serverDetail) => {
-                    // Get a sample result to determine server info
                     const sampleResult = serverDetail.results[0];
                     if (!sampleResult) return null;
 
@@ -453,7 +414,6 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({
                       </span>
                     );
                   })}
-                  {/* Google stats */}
                   {searchStats.google > 0 && (
                     <span className="stat-item">
                       <span className="stat-icon">🗺️</span>

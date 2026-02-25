@@ -10,55 +10,64 @@ export interface SearchResult {
   sourceIcon: string;
   sourceColor: string;
   sourceName: string;
-  googleData?: any; // Additional Google-specific data
+  googleData?: any;
   serverInfo?: {
     serverIndex: number;
     serverUrl: string;
     source: string;
   };
-  _rawNominatimData?: any; // Raw Nominatim API response data
+  _rawNominatimData?: any;
 }
 
 export interface CombinedSearchOptions {
   maxResultsPerSource?: number;
-  enableNominatim?: boolean;
   enableGoogle?: boolean;
   deduplicateResults?: boolean;
 }
 
 export class CombinedSearchService {
-  private nominatimServices: any[];
+  private nominatimServices: { service: any; url: string; name: string }[] = [];
   private googleService: any;
   private options: CombinedSearchOptions;
 
   constructor(options: CombinedSearchOptions = {}) {
     this.options = {
       maxResultsPerSource: 5,
-      enableNominatim: true,
       enableGoogle: true,
       deduplicateResults: true,
       ...options,
     };
 
-    this.nominatimServices = [];
-    if (this.options.enableNominatim) {
-      // Create multiple Nominatim service instances, one for each configured server
-      const serverCount = (NominatimGeocoderService as any).getServerCount();
-      for (let i = 0; i < serverCount; i++) {
-        this.nominatimServices.push(new (NominatimGeocoderService as any)(i));
-      }
-    }
-
     if (this.options.enableGoogle) {
-      // Use the custom Google geocoder service
       this.googleService = new (GoogleGeocoderService as any)();
     }
-
-    // Initialized
   }
 
   /**
-   * Search both Nominatim and Google APIs and combine results
+   * Update the set of Nominatim-compatible search servers.
+   * Call this whenever the discovered map servers change.
+   */
+  updateSearchServers(servers: { url: string; name: string }[]) {
+    const currentUrls = new Set(this.nominatimServices.map((s) => s.url));
+    const newUrls = new Set(servers.map((s) => s.url));
+
+    // Skip rebuild if the URL set hasn't changed
+    if (
+      currentUrls.size === newUrls.size &&
+      [...currentUrls].every((u) => newUrls.has(u))
+    ) {
+      return;
+    }
+
+    this.nominatimServices = servers.map((server) => ({
+      service: new (NominatimGeocoderService as any)(server.url),
+      url: server.url,
+      name: server.name,
+    }));
+  }
+
+  /**
+   * Search all backends and combine results
    */
   async search(query: string, signal?: AbortSignal): Promise<SearchResult[]> {
     if (!query || query.trim().length === 0) {
@@ -67,21 +76,17 @@ export class CombinedSearchService {
 
     const searchPromises: Promise<SearchResult[]>[] = [];
 
-    // Search all Nominatim servers
-    if (this.options.enableNominatim && this.nominatimServices.length > 0) {
+    if (this.nominatimServices.length > 0) {
       searchPromises.push(this.searchAllNominatimServers(query, signal));
     }
 
-    // Search Google
     if (this.options.enableGoogle && this.googleService) {
       searchPromises.push(this.searchGoogle(query, signal));
     }
 
     try {
-      // Execute all searches in parallel
       const results = await Promise.allSettled(searchPromises);
 
-      // Combine results from all sources
       let combinedResults: SearchResult[] = [];
 
       results.forEach((result) => {
@@ -92,13 +97,9 @@ export class CombinedSearchService {
         }
       });
 
-      // Deduplicate results if enabled
       if (this.options.deduplicateResults) {
         combinedResults = this.deduplicateResults(combinedResults);
       }
-
-      // Sort results by relevance (you can implement custom sorting logic here)
-      combinedResults = this.sortResults(combinedResults);
 
       return combinedResults;
     } catch (error) {
@@ -107,9 +108,6 @@ export class CombinedSearchService {
     }
   }
 
-  /**
-   * Wrap a promise with a timeout - returns fallback value if timeout is reached
-   */
   private withTimeout<T>(
     promise: Promise<T>,
     timeoutMs: number,
@@ -123,25 +121,19 @@ export class CombinedSearchService {
     ]);
   }
 
-  /**
-   * Search all configured Nominatim servers in parallel with timeout fallback
-   */
   private async searchAllNominatimServers(
     query: string,
     signal?: AbortSignal,
   ): Promise<SearchResult[]> {
-    // Timeout per server (5 seconds) - if a server doesn't respond, continue without it
     const SERVER_TIMEOUT_MS = 5000;
 
     try {
-      // Check if search was cancelled
       if (signal?.aborted) {
         throw new Error("Search was cancelled");
       }
 
-      // Search all Nominatim servers in parallel with individual timeouts
       const nominatimPromises = this.nominatimServices.map(
-        async (service, index) => {
+        async ({ service, url, name }, index) => {
           const serverSearch = async (): Promise<SearchResult[]> => {
             try {
               const results = await service.geocode(query);
@@ -152,37 +144,31 @@ export class CombinedSearchService {
                   source: "nominatim" as const,
                   sourceIcon: "🌍",
                   sourceColor: "#7cb342",
-                  sourceName: `OpenStreetMap ${index + 1}`,
+                  sourceName: name,
                   serverInfo: result.serverInfo || {
                     serverIndex: index,
+                    serverUrl: url,
                     source: "nominatim",
                   },
                 }));
             } catch (error) {
-              console.error(`Nominatim server ${index} search error:`, error);
+              console.error(`Search server "${name}" error:`, error);
               return [];
             }
           };
 
-          // Wrap each server's search with a timeout
           return this.withTimeout(serverSearch(), SERVER_TIMEOUT_MS, []);
         },
       );
 
-      // Wait for all servers (they will resolve with empty array on timeout)
       const allNominatimResults = await Promise.all(nominatimPromises);
-
-      // Flatten the results array
       return allNominatimResults.flat();
     } catch (error) {
-      console.error("All Nominatim servers search error:", error);
+      console.error("All search servers error:", error);
       return [];
     }
   }
 
-  /**
-   * Search Google API using the custom Google geocoder service with timeout
-   */
   private async searchGoogle(
     query: string,
     signal?: AbortSignal,
@@ -191,7 +177,6 @@ export class CombinedSearchService {
 
     const googleSearch = async (): Promise<SearchResult[]> => {
       try {
-        // Check if search was cancelled
         if (signal?.aborted) {
           throw new Error("Search was cancelled");
         }
@@ -217,19 +202,15 @@ export class CombinedSearchService {
     return this.withTimeout(googleSearch(), GOOGLE_TIMEOUT_MS, []);
   }
 
-  /**
-   * Deduplicate results based on display name similarity
-   */
   private deduplicateResults(results: SearchResult[]): SearchResult[] {
     const seen = new Set<string>();
     const deduplicated: SearchResult[] = [];
 
     for (const result of results) {
-      // Create a normalized key for comparison
       const normalizedName = result.displayName
         .toLowerCase()
-        .replace(/[^\w\s]/g, "") // Remove punctuation
-        .replace(/\s+/g, " ") // Normalize whitespace
+        .replace(/[^\w\s]/g, "")
+        .replace(/\s+/g, " ")
         .trim();
 
       if (!seen.has(normalizedName)) {
@@ -241,23 +222,10 @@ export class CombinedSearchService {
     return deduplicated;
   }
 
-  /**
-   * Sort results by relevance (customize this logic as needed)
-   */
-  private sortResults(results: SearchResult[]): SearchResult[] {
-    // For now, just return in the order they were received
-    // You can implement custom sorting logic here
-    return results;
-  }
-
-  /**
-   * Get search statistics
-   */
   getSearchStats(results: SearchResult[]) {
     const nominatimResults = results.filter((r) => r.source === "nominatim");
     const googleResults = results.filter((r) => r.source === "google");
 
-    // Group Nominatim results by server
     const serverStats: { [key: number]: number } = {};
     nominatimResults.forEach((result) => {
       if (result.serverInfo?.serverIndex !== undefined) {
@@ -266,7 +234,7 @@ export class CombinedSearchService {
       }
     });
 
-    const stats = {
+    return {
       total: results.length,
       nominatim: nominatimResults.length,
       google: googleResults.length,
@@ -278,46 +246,6 @@ export class CombinedSearchService {
           (r) => r.serverInfo?.serverIndex === parseInt(index),
         ),
       })),
-    };
-
-    return stats;
-  }
-
-  /**
-   * Filter results by source
-   */
-  filterBySource(
-    results: SearchResult[],
-    source: "nominatim" | "google",
-  ): SearchResult[] {
-    return results.filter((result) => result.source === source);
-  }
-
-  /**
-   * Get unique sources from results
-   */
-  getUniqueSources(results: SearchResult[]): string[] {
-    return [...new Set(results.map((r) => r.source))];
-  }
-
-  /**
-   * Get information about all configured servers
-   */
-  getServerInfo() {
-    const nominatimUrls = (NominatimGeocoderService as any).getServerUrls();
-    return {
-      nominatim: {
-        count: this.nominatimServices.length,
-        servers: nominatimUrls.map((url: string, index: number) => ({
-          index,
-          url,
-          name: `OpenStreetMap ${index + 1}`,
-        })),
-      },
-      google: {
-        enabled: !!this.googleService,
-        name: "Google Maps",
-      },
     };
   }
 }

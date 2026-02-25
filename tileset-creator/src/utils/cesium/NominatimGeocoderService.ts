@@ -1,38 +1,33 @@
 import { Rectangle, Credit, Resource } from "cesium";
-import CONFIG from "../../config";
 
 const CREDIT_HTML = `<a href="https://nominatim.openstreetmap.org/" target="_blank">© OpenStreetMap contributors</a>`;
 
 /**
- * Provides geocoding through OpenStreetMap's Nominatim API.
- * This service follows Cesium's GeocoderService interface and supports multiple Nominatim servers.
+ * Provides geocoding through a Nominatim-compatible API.
+ * Accepts a search URL directly so backends can be discovered at runtime.
  */
-function NominatimGeocoderService(this: any, serverIndex: number = 0) {
-  const apiUrls = CONFIG.NOMINATIM_API_URLS;
-  const selectedUrl = apiUrls[serverIndex] || apiUrls[0]; // Fallback to first URL if index is out of bounds
-
-  this._serverIndex = serverIndex;
-  this._apiUrls = apiUrls;
+function NominatimGeocoderService(this: any, url: string) {
+  this._url = url;
   this._resource = new Resource({
-    url: selectedUrl,
+    url,
     queryParameters: {
-      format: "jsonv2", // Use jsonv2 format which might include more data
+      format: "jsonv2",
       addressdetails: 1,
-      extratags: 1, // Include OSM tags in the response
-      namedetails: 1, // Include name details
-      dedupe: 0, // Don't dedupe results
-      polygon_geojson: 1, // Include polygon data
+      extratags: 1,
+      namedetails: 1,
+      dedupe: 0,
+      polygon_geojson: 1,
       limit: 5,
-      "accept-language": "en", // Force English language results
+      "accept-language": "en",
     },
     headers: {
-      "Accept-Language": "en-US,en;q=0.9", // Force English language preference
+      "Accept-Language": "en-US,en;q=0.9",
     },
   });
 
   this._credit = new Credit(CREDIT_HTML, true);
-  this._lastResults = []; // Store last results to access altitude data
-  this._lastRawResponse = []; // Store last raw response from API
+  this._lastResults = [];
+  this._lastRawResponse = [];
 }
 
 Object.defineProperties(NominatimGeocoderService.prototype, {
@@ -43,13 +38,6 @@ Object.defineProperties(NominatimGeocoderService.prototype, {
   },
 });
 
-/**
- * Get a list of possible locations that match a search string.
- *
- * @function
- * @param {string} query The search string
- * @returns {Promise<GeocoderService.Result[]>}
- */
 NominatimGeocoderService.prototype.geocode = async function (query: string) {
   if (!query || query.trim().length === 0) {
     return [];
@@ -65,7 +53,6 @@ NominatimGeocoderService.prototype.geocode = async function (query: string) {
   try {
     const response = await resource.fetchJson();
 
-    // Store the raw response for later access when results are selected
     this._lastRawResponse = response;
 
     if (!Array.isArray(response) || response.length === 0) {
@@ -78,47 +65,36 @@ NominatimGeocoderService.prototype.geocode = async function (query: string) {
       const east = parseFloat(result.boundingbox[3]);
       const north = parseFloat(result.boundingbox[1]);
 
-      // Extract altitude from OSM tags or result data
-      let altitude = 1000; // Default altitude
-
-      // Store the raw result data for later access
+      let altitude = 1000;
       result._rawNominatimData = result;
 
-      // Extract height from various sources
       if (result.altitude) {
         altitude = parseFloat(result.altitude);
       } else if (result.extratags && result.extratags.height) {
         altitude = parseFloat(result.extratags.height);
       } else if (result.osm_type && result.osm_id) {
-        // Mark for details lookup if no height found
         result._needsDetailsLookup = true;
       }
 
       return {
         displayName: result.display_name,
         destination: Rectangle.fromDegrees(west, south, east, north),
-        altitude: altitude, // Add altitude to the result
+        altitude,
         attribution: {
           html: CREDIT_HTML,
           collapsible: false,
         },
-        // Additional metadata about which server provided this result
         serverInfo: {
-          serverIndex: this._serverIndex,
-          serverUrl: this._resource.url,
+          serverUrl: this._url,
           source: "nominatim",
         },
-        // Store raw Nominatim data for debugging
         _rawNominatimData: result._rawNominatimData,
       };
     });
 
-    // Store the results for later access (for altitude data)
     this._lastResults = results;
 
-    // Try to fetch details for results that need height data
     const resultsWithDetails = await this._enrichResultsWithDetails(results);
-
     return resultsWithDetails;
   } catch (error) {
     console.error("Nominatim geocoding error:", error);
@@ -137,7 +113,6 @@ NominatimGeocoderService.prototype._enrichResultsWithDetails = async function (
   for (const result of results) {
     if (result._needsDetailsLookup && result.osm_type && result.osm_id) {
       try {
-        // Create details API request
         const detailsResource = this._resource.getDerivedResource({
           url: this._resource.url.replace("/search", "/details.php"),
           queryParameters: {
@@ -153,7 +128,6 @@ NominatimGeocoderService.prototype._enrichResultsWithDetails = async function (
         const detailsResponse = await detailsResource.fetchJson();
 
         if (detailsResponse && detailsResponse.extratags) {
-          // Update altitude if height data is found
           if (detailsResponse.extratags.height) {
             result.altitude = parseFloat(detailsResponse.extratags.height);
           }
@@ -164,26 +138,11 @@ NominatimGeocoderService.prototype._enrichResultsWithDetails = async function (
       }
     }
 
-    // Clean up the temporary flag
     delete result._needsDetailsLookup;
     enrichedResults.push(result);
   }
 
   return enrichedResults;
-};
-
-/**
- * Get the number of configured Nominatim servers
- */
-NominatimGeocoderService.getServerCount = function () {
-  return CONFIG.NOMINATIM_API_URLS.length;
-};
-
-/**
- * Get all configured Nominatim server URLs
- */
-NominatimGeocoderService.getServerUrls = function () {
-  return [...CONFIG.NOMINATIM_API_URLS];
 };
 
 export default NominatimGeocoderService;
