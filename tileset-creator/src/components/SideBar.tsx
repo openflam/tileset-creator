@@ -55,7 +55,11 @@ function SideBar({
         />
 
         {CONFIG.MODE === "map-server" && editingMap && (
-          <MapInfoCustom key={editingMap.url} mapInfo={editingMap} viewer={viewer} />
+          <MapInfoCustom
+            key={editingMap.url}
+            mapInfo={editingMap}
+            viewer={viewer}
+          />
         )}
       </>
       {editEnabled && CONFIG.MODE === "global" && (

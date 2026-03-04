@@ -25,7 +25,11 @@ interface PropsType {
   setEditingMap?: React.Dispatch<React.SetStateAction<MapInfo | null>>;
   onVisibilityChange?: () => void;
 }
-function MapInfoDefault({ mapInfo, setEditingMap, onVisibilityChange }: PropsType) {
+function MapInfoDefault({
+  mapInfo,
+  setEditingMap,
+  onVisibilityChange,
+}: PropsType) {
   return (
     <Card className="w-100 mb-3">
       <Card.Body>
@@ -43,47 +47,49 @@ function MapInfoDefault({ mapInfo, setEditingMap, onVisibilityChange }: PropsTyp
           </Col>
         </Row>
 
-          <Form>
-             <div className="d-flex align-items-center mb-0">
-                {/* Visibility Toggle Icon */}
-                <div 
-                  className="me-2 cursor-pointer" 
-                  style={{ cursor: "pointer", fontSize: "1.2rem", lineHeight: 1 }}
-                  onClick={(e) => {
-                    const newVisible = !mapInfo.tile?.show; // Access current state
-                    changeTilesetVisibility(
-                        mapInfo.tile as Cesium3DTileset, 
-                        newVisible
-                    );
-                    // Force update? mapInfo.tile.show is internal cesium state. 
-                    // We might need local state to reflect icon change immediately if not reactive.
-                    e.currentTarget.innerHTML = newVisible 
-                        ? '<i class="bi bi-eye"></i>' 
-                        : '<i class="bi bi-eye-slash"></i>';
-                    
-                    if (onVisibilityChange) onVisibilityChange();
-                  }}
-                >
-                   {/* Initial Render Check */}
-                   <i className={`bi ${mapInfo.tile?.show !== false ? "bi-eye" : "bi-eye-slash"}`}></i>
-                </div>
+        <Form>
+          <div className="d-flex align-items-center mb-0">
+            {/* Visibility Toggle Icon */}
+            <div
+              className="me-2 cursor-pointer"
+              style={{ cursor: "pointer", fontSize: "1.2rem", lineHeight: 1 }}
+              onClick={(e) => {
+                const newVisible = !mapInfo.tile?.show; // Access current state
+                changeTilesetVisibility(
+                  mapInfo.tile as Cesium3DTileset,
+                  newVisible,
+                );
+                // Force update? mapInfo.tile.show is internal cesium state.
+                // We might need local state to reflect icon change immediately if not reactive.
+                e.currentTarget.innerHTML = newVisible
+                  ? '<i class="bi bi-eye"></i>'
+                  : '<i class="bi bi-eye-slash"></i>';
 
-                {/* Opacity Slider */}
-                <Form.Range
-                    className="flex-grow-1"
-                    min={0}
-                    max={1}
-                    step={0.1}
-                    defaultValue={1}
-                    onChange={(e) => {
-                        changeTilesetVisibility(mapInfo.tile as Cesium3DTileset, true); // Ensure visible when sliding
-                        changeTilesetOpacity(
-                        mapInfo.tile as Cesium3DTileset,
-                        parseFloat(e.target.value),
-                        );
-                    }}
-                />
+                if (onVisibilityChange) onVisibilityChange();
+              }}
+            >
+              {/* Initial Render Check */}
+              <i
+                className={`bi ${mapInfo.tile?.show !== false ? "bi-eye" : "bi-eye-slash"}`}
+              ></i>
             </div>
+
+            {/* Opacity Slider */}
+            <Form.Range
+              className="flex-grow-1"
+              min={0}
+              max={1}
+              step={0.1}
+              defaultValue={1}
+              onChange={(e) => {
+                changeTilesetVisibility(mapInfo.tile as Cesium3DTileset, true); // Ensure visible when sliding
+                changeTilesetOpacity(
+                  mapInfo.tile as Cesium3DTileset,
+                  parseFloat(e.target.value),
+                );
+              }}
+            />
+          </div>
 
           {CONFIG.MODE === "map-server" && !mapInfo.key && (
             <Button
