@@ -113,7 +113,7 @@ async function mapServersToMapInfos(mapsDiscovered: {
         mapName,
       );
       mapInfo.credentialsCookiesRequired =
-        tileService.credentialsCookiesRequired || false;
+        mapServer.capabilities.credentialsCookiesRequired || false; // Inherit from mapserver
     }
 
     mapInfos.push(mapInfo);
