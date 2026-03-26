@@ -22,8 +22,10 @@ export function getSearchServersFromMaps(
     const searchService = mapServer.getService("search");
     if (!searchService) continue;
 
-    const fullUrl = getFullUrl(searchService.url, mapServer.name);
-    if (!fullUrl || seenUrls.has(fullUrl)) continue;
+    const rawUrl = getFullUrl(searchService.url, mapServer.name);
+    if (!rawUrl) continue;
+    const fullUrl = rawUrl.replace(/\/+$/, "");
+    if (seenUrls.has(fullUrl)) continue;
 
     seenUrls.add(fullUrl);
     servers.push({
