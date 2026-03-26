@@ -73,6 +73,7 @@ function SideBar({
       <SidebarMapList
         mapTilesLoaded={mapTilesLoaded}
         viewer={viewer}
+        setEditingMap={setEditingMap}
         labels={labels}
         editEnabled={editEnabled}
         onAddLabel={handleAddLabelFromCamera}
@@ -88,15 +89,7 @@ function SideBar({
         <MapInfoCustom
           key={editingMap.url}
           mapInfo={editingMap}
-          onAddLabel={handleAddLabelFromCamera}
           viewer={viewer}
-          labels={labels}
-          mapUrl={editingMap.url}
-          onDeleteLabel={handleDeleteLabel}
-          onLabelPositionChange={handleLabelPositionChange}
-          onDeleteAllLabels={handleDeleteAllLabels}
-          onSubmitLabels={handleExportLabels}
-          editEnabled={editEnabled}
         />
       )}
 

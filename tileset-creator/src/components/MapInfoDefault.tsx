@@ -9,6 +9,7 @@ import {
 } from "../utils/cesium/camera-utils";
 import CompactLabelCard from "./labels/CompactLabelCard";
 import { type LabelInfo } from "./labels/LabelCard";
+import CONFIG from "../config";
 
 const changeTilesetOpacity = (tileset: Cesium3DTileset, opacity: number) => {
   if (tileset) {
@@ -29,6 +30,8 @@ const changeTilesetVisibility = (
 
 interface PropsType {
   mapInfo: MapInfo;
+  setEditingMap?: React.Dispatch<React.SetStateAction<MapInfo | null>>;
+  onVisibilityChange?: () => void;
   externalOpacity?: number;
   onOpacityChange?: (opacity: number) => void;
   onAddLabel?: (
@@ -51,6 +54,8 @@ interface PropsType {
 
 function MapInfoDefault({
   mapInfo,
+  setEditingMap,
+  onVisibilityChange,
   externalOpacity,
   onOpacityChange,
   onAddLabel,
@@ -68,57 +73,40 @@ function MapInfoDefault({
   const [labelName, setLabelName] = useState("");
   const [cameraJsonInput, setCameraJsonInput] = useState("");
 
-  // Sync with external opacity changes
   useEffect(() => {
     if (externalOpacity !== undefined && externalOpacity !== opacity) {
       setOpacity(externalOpacity);
       changeTilesetOpacity(mapInfo.tile as Cesium3DTileset, externalOpacity);
     }
-  }, [externalOpacity, opacity, mapInfo.tile]);
+  }, [externalOpacity]);
 
   const handleAddLabel = () => {
     if (!onAddLabel || !labelName.trim() || !cameraJsonInput.trim()) {
       alert("Please fill in both the label name and camera JSON data.");
       return;
     }
-
     try {
       const cameraData = parseCameraViewData(cameraJsonInput.trim());
       onAddLabel(cameraData, labelName.trim(), mapUrl);
-
-      // Reset form
       setLabelName("");
       setCameraJsonInput("");
       setShowAddLabel(false);
     } catch (error) {
       alert("Invalid camera JSON data. Please check the format and try again.");
-      console.error("Camera JSON parsing error:", error);
     }
   };
 
   const handleGetCurrentCamera = () => {
-    if (!viewer) {
-      alert("Viewer not available");
-      return;
-    }
-
+    if (!viewer) return;
     const currentView = getCurrentCameraView(viewer);
     if (currentView) {
-      const formattedJson = formatCameraViewData(currentView);
-      setCameraJsonInput(formattedJson);
-    } else {
-      alert("Failed to get current camera view");
+      setCameraJsonInput(formatCameraViewData(currentView));
     }
   };
 
   const handleDeleteAll = () => {
-    if (onDeleteAllLabels) {
-      const confirmed = confirm(
-        "Are you sure you want to delete all labels for this map?",
-      );
-      if (confirmed) {
-        onDeleteAllLabels(mapUrl);
-      }
+    if (onDeleteAllLabels && confirm("Are you sure you want to delete all labels for this map?")) {
+      onDeleteAllLabels(mapUrl);
     }
   };
 
@@ -128,6 +116,7 @@ function MapInfoDefault({
       onSubmitLabels(mapUrl, mapLabels);
     }
   };
+
   return (
     <Card className="w-100 mb-3">
       <Card.Body>
@@ -146,22 +135,29 @@ function MapInfoDefault({
         </Row>
 
         <Form>
-          <Form.Check
-            type="checkbox"
-            label="Show Map"
-            defaultChecked={true}
-            onChange={(e) => {
-              changeTilesetVisibility(
-                mapInfo.tile as Cesium3DTileset,
-                e.target.checked,
-              );
-            }}
-            className="mb-3"
-          />
+          <div className="d-flex align-items-center mb-0">
+            <div
+              className="me-2 cursor-pointer"
+              style={{ cursor: "pointer", fontSize: "1.2rem", lineHeight: 1 }}
+              onClick={(e) => {
+                const newVisible = !mapInfo.tile?.show;
+                changeTilesetVisibility(
+                  mapInfo.tile as Cesium3DTileset,
+                  newVisible,
+                );
+                e.currentTarget.innerHTML = newVisible
+                  ? '<i class="bi bi-eye"></i>'
+                  : '<i class="bi bi-eye-slash"></i>';
+                if (onVisibilityChange) onVisibilityChange();
+              }}
+            >
+              <i
+                className={`bi ${mapInfo.tile?.show !== false ? "bi-eye" : "bi-eye-slash"}`}
+              ></i>
+            </div>
 
-          <Form.Group>
-            <Form.Label>Opacity</Form.Label>
             <Form.Range
+              className="flex-grow-1"
               min={0}
               max={1}
               step={0.1}
@@ -169,6 +165,7 @@ function MapInfoDefault({
               onChange={(e) => {
                 const newOpacity = parseFloat(e.target.value);
                 setOpacity(newOpacity);
+                changeTilesetVisibility(mapInfo.tile as Cesium3DTileset, true);
                 changeTilesetOpacity(
                   mapInfo.tile as Cesium3DTileset,
                   newOpacity,
@@ -176,7 +173,18 @@ function MapInfoDefault({
                 onOpacityChange?.(newOpacity);
               }}
             />
-          </Form.Group>
+          </div>
+
+          {CONFIG.MODE === "map-server" && !mapInfo.key && (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={setEditingMap ? () => setEditingMap(mapInfo) : undefined}
+              className="mb-0 mt-2"
+            >
+              Adjust map transform
+            </Button>
+          )}
 
           {editEnabled && onAddLabel && (
             <div className="mt-3">
@@ -211,7 +219,7 @@ function MapInfoDefault({
                         disabled={!viewer}
                         title="Get current camera view"
                       >
-                        📷 Get Current View
+                        Get Current View
                       </Button>
                     </div>
                     <Form.Control
@@ -250,7 +258,6 @@ function MapInfoDefault({
             </div>
           )}
 
-          {/* Display labels for this map */}
           {editEnabled &&
             (() => {
               const mapLabels = labels.filter(
@@ -277,7 +284,6 @@ function MapInfoDefault({
                       ))}
                     </div>
 
-                    {/* Action buttons */}
                     <div className="d-flex gap-2 mt-3">
                       <Button
                         variant="danger"

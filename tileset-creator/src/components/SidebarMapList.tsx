@@ -11,6 +11,7 @@ import { type LabelInfo } from "./labels/LabelCard";
 type Props = {
   mapTilesLoaded: MapTilesLoaded;
   viewer: Viewer;
+  setEditingMap: React.Dispatch<React.SetStateAction<MapInfo | null>>;
   labels?: LabelInfo[];
   editEnabled?: boolean;
   onAddLabel?: (cameraData: CameraViewData, labelName: string, mapUrl: string) => void;
@@ -25,6 +26,7 @@ type Props = {
 function SidebarMapList({
   mapTilesLoaded,
   viewer,
+  setEditingMap,
   labels = [],
   editEnabled = false,
   onAddLabel,
@@ -40,11 +42,6 @@ function SidebarMapList({
   const forceUpdate = useCallback(() => setTick((t) => t + 1), []);
 
   const groupedMaps = useMemo(() => {
-     // ... (grouping logic remains same, dependent on mapTilesLoaded)
-     // NOTE: If maps are added/removed, mapTilesLoaded changes, triggering this.
-     // Visibility changes do NOT change mapTilesLoaded reference, so this memo won't re-run.
-     // But renderBuildingContent runs on every render.
-     // IsGrouping dependent on visibility? No.
     const maps = Object.entries(mapTilesLoaded)
       .map(([url, mapInfo]) => ({ ...mapInfo, urlOrKey: url }))
       .filter((map) => {
@@ -78,37 +75,36 @@ function SidebarMapList({
     });
 
     return { buildings, unknownBuildingKey, worldMapKey };
-  }, [mapTilesLoaded]); // Only re-calc grouping if list changes
+  }, [mapTilesLoaded]);
 
   const toggleGroupVisibility = (maps: MapInfo[], visible: boolean) => {
-    // 1. Update Cesium visibility
     maps.forEach((map) => {
       if (map.tile) {
         (map.tile as Cesium3DTileset).show = visible;
       }
     });
-
-    // 2. Trigger local re-render
     forceUpdate();
   };
-  
+
   const isGroupVisible = (maps: MapInfo[]) => {
-      return maps.every(m => m.tile?.show !== false);
+    return maps.every((m) => m.tile?.show !== false);
   };
 
   const renderMapItem = (map: MapInfo) => {
     if (!map.authenticated && map.type === "default") {
       return <MapInfoAuth key={map.url} mapInfo={map} />;
     }
-    
+
     const isGoogle = map.name === "Google" || map.commonName === "Google";
     const mapUrl = map.url || "";
-    
+
     if (map.type === "default") {
       return (
         <MapInfoDefault
           key={map.url}
           mapInfo={map}
+          setEditingMap={setEditingMap}
+          onVisibilityChange={forceUpdate}
           mapUrl={mapUrl}
           viewer={viewer}
           labels={labels}
@@ -123,21 +119,7 @@ function SidebarMapList({
         />
       );
     }
-    return (
-      <MapInfoCustom
-        key={map.url}
-        mapInfo={map}
-        viewer={viewer}
-        mapUrl={mapUrl}
-        labels={labels}
-        editEnabled={editEnabled}
-        onAddLabel={onAddLabel}
-        onDeleteLabel={onDeleteLabel}
-        onLabelPositionChange={onLabelPositionChange}
-        onDeleteAllLabels={onDeleteAllLabels}
-        onSubmitLabels={onSubmitLabels}
-      />
-    );
+    return <MapInfoCustom key={map.url} mapInfo={map} viewer={viewer} />;
   };
 
   const renderBuildingContent = (maps: MapInfo[]) => {
@@ -175,7 +157,6 @@ function SidebarMapList({
           const floorMaps = floors[floor];
           const isUnknown = floor === unknownFloorKey;
 
-          // Smart Flattening
           if (!isUnknown && floorMaps.length === 1) {
             const singleMap = floorMaps[0];
             const displayMap = {
@@ -192,7 +173,9 @@ function SidebarMapList({
               title={floor}
               className={`floor-group ${isUnknown ? "unknown-floor" : ""}`}
               headerClassName={isUnknown ? "unknown-floor-header" : ""}
-              onToggleVisibility={() => toggleGroupVisibility(floorMaps, !isGroupVisible(floorMaps))}
+              onToggleVisibility={() =>
+                toggleGroupVisibility(floorMaps, !isGroupVisible(floorMaps))
+              }
               isVisible={isGroupVisible(floorMaps)}
             >
               <div className="d-flex flex-column gap-2 p-2">
@@ -230,7 +213,9 @@ function SidebarMapList({
             title={buildingName}
             className={`building-group ${isUnknown ? "unknown-building" : ""}`}
             headerClassName={isUnknown ? "unknown-building-header" : ""}
-            onToggleVisibility={() => toggleGroupVisibility(maps, !isGroupVisible(maps))}
+            onToggleVisibility={() =>
+              toggleGroupVisibility(maps, !isGroupVisible(maps))
+            }
             isVisible={isGroupVisible(maps)}
           >
             <div className="p-2">{renderBuildingContent(maps)}</div>
