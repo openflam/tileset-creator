@@ -18,7 +18,17 @@ export interface LabelInfo {
     roll: number;
   };
   pin: Label;
-  mapUrl?: string; // The map URL this label belongs to
+  mapUrl?: string;
+  bbox?: {
+    corners: { longitude: number; latitude: number }[];
+    west: number;
+    south: number;
+    east: number;
+    north: number;
+    height: number;
+    extrudedHeight: number;
+  };
+  bboxEntity?: any;
 }
 
 interface LabelCardProps {

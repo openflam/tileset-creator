@@ -19,6 +19,7 @@ function HomePage() {
     CONFIG.MODE !== "map-server",
   );
   const [googleOpacity, setGoogleOpacity] = useState(1);
+  const [mapOpacities, setMapOpacities] = useState<Record<string, number>>({});
   const [labels, setLabels] = useState<LabelInfo[]>([]);
 
   const mapsDiscoveryObj = new MapsDiscovery(CONFIG.DISCOVERY_SUFFIX);
@@ -44,6 +45,10 @@ function HomePage() {
       setDiscoverEnabled={setDiscoverEnabled}
       googleOpacity={googleOpacity}
       onGoogleOpacityChange={setGoogleOpacity}
+      mapOpacities={mapOpacities}
+      onMapOpacityChange={(url, opacity) =>
+        setMapOpacities((prev) => ({ ...prev, [url]: opacity }))
+      }
       labels={labels}
       setLabels={setLabels}
     />
@@ -61,6 +66,7 @@ function HomePage() {
             discoverEnabled={discoverEnabled}
             googleOpacity={googleOpacity}
             setGoogleOpacity={setGoogleOpacity}
+            setMapOpacities={setMapOpacities}
           />
         </Col>
 

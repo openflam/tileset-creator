@@ -1,7 +1,8 @@
-import { Viewer, Cartesian3 } from "cesium";
+import { Viewer, Cartesian3, Color, PolygonHierarchy } from "cesium";
 import { createLabel } from "../utils/cesium/label";
 import { type CameraViewData } from "../utils/cesium/camera-utils";
 import { type LabelInfo } from "../components/labels/LabelCard";
+import { type BboxResult } from "./useBboxDrawing";
 
 export interface UseLabelsProps {
   labels: LabelInfo[];
@@ -38,6 +39,9 @@ export function useLabels({ labels, setLabels, viewer }: UseLabelsProps) {
       const labelToDelete = prevLabels.find((label) => label.id === labelId);
       if (labelToDelete) {
         labelToDelete.pin.destroy();
+        if (labelToDelete.bboxEntity) {
+          viewer.entities.remove(labelToDelete.bboxEntity);
+        }
       }
       return prevLabels.filter((label) => label.id !== labelId);
     });
@@ -50,10 +54,50 @@ export function useLabels({ labels, setLabels, viewer }: UseLabelsProps) {
       );
       labelsToDelete.forEach((label) => {
         label.pin.destroy();
+        if (label.bboxEntity) {
+          viewer.entities.remove(label.bboxEntity);
+        }
       });
       return prevLabels.filter((label) => label.mapUrl !== mapUrl);
     });
   };
+
+  const labelToExportNode = (label: LabelInfo, id: number) => ({
+    type: "node",
+    id,
+    lat: label.position.latitude,
+    lon: label.position.longitude,
+    tags: {
+      indoor: "room",
+      level: "2",
+      ref: label.name,
+      name: label.name,
+      building: "university",
+      height: label.position.height.toFixed(2),
+      "building:levels": "3",
+      "addr:city": "Pittsburgh",
+      "addr:state": "PA",
+      "addr:country": "US",
+      amenity: "university",
+      operator: "Carnegie Mellon University",
+      description: `Label created at ${new Date().toISOString()}`,
+      ...(label.mapUrl && { map: label.mapUrl }),
+      ...(label.bbox && {
+        "bbox:south": label.bbox.south.toString(),
+        "bbox:north": label.bbox.north.toString(),
+        "bbox:west": label.bbox.west.toString(),
+        "bbox:east": label.bbox.east.toString(),
+        "bbox:height": label.bbox.height.toFixed(2),
+        "bbox:extruded_height": label.bbox.extrudedHeight.toFixed(2),
+        ...Object.fromEntries(
+          label.bbox.corners.flatMap((c, i) => [
+            [`bbox:corner${i + 1}_lon`, c.longitude.toString()],
+            [`bbox:corner${i + 1}_lat`, c.latitude.toString()],
+          ]),
+        ),
+      }),
+    },
+  });
 
   const handleExportLabels = (mapUrl: string, mapLabels: LabelInfo[]) => {
     if (mapLabels.length === 0) {
@@ -62,28 +106,9 @@ export function useLabels({ labels, setLabels, viewer }: UseLabelsProps) {
     }
 
     const baseId = 1001;
-
-    const elements = mapLabels.map((label, index) => ({
-      type: "node",
-      id: baseId + index,
-      lat: label.position.latitude,
-      lon: label.position.longitude,
-      tags: {
-        indoor: "room",
-        level: "2",
-        ref: label.name,
-        name: label.name,
-        building: "university",
-        height: label.position.height.toFixed(2),
-        "building:levels": "3",
-        "addr:city": "Pittsburgh",
-        "addr:state": "PA",
-        "addr:country": "US",
-        amenity: "university",
-        operator: "Carnegie Mellon University",
-        description: `Label created at ${new Date().toISOString()}`,
-      },
-    }));
+    const elements = mapLabels.map((label, index) =>
+      labelToExportNode(label, baseId + index),
+    );
 
     const exportData = { elements };
 
@@ -148,6 +173,99 @@ export function useLabels({ labels, setLabels, viewer }: UseLabelsProps) {
     }
   };
 
+  const handleAddLabelFromBbox = (name: string, bbox: BboxResult, mapUrl = "") => {
+    try {
+      const labelId = `label-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const center = bbox.center;
+
+      const pin = createLabel({
+        position: Cartesian3.fromDegrees(
+          center.longitude,
+          center.latitude,
+          center.height + bbox.roomHeight / 2,
+        ),
+        text: name,
+        viewer: viewer,
+      });
+
+      const bboxEntity = viewer.entities.add({
+        polygon: {
+          hierarchy: new PolygonHierarchy(
+            bbox.corners.map((c) =>
+              Cartesian3.fromDegrees(c.longitude, c.latitude),
+            ),
+          ),
+          material: Color.CYAN.withAlpha(0.25),
+          height: bbox.height,
+          extrudedHeight: bbox.height + bbox.roomHeight,
+          outline: true,
+          outlineColor: Color.CYAN,
+        },
+      });
+
+      const labelInfo: LabelInfo = {
+        id: labelId,
+        name,
+        position: center,
+        pin,
+        mapUrl,
+        bbox: {
+          corners: bbox.corners,
+          west: bbox.west,
+          south: bbox.south,
+          east: bbox.east,
+          north: bbox.north,
+          height: bbox.height,
+          extrudedHeight: bbox.height + bbox.roomHeight,
+        },
+        bboxEntity,
+      };
+
+      handleLabelCreated(labelInfo);
+    } catch (error) {
+      console.error("Failed to create bbox label:", error);
+      alert("Failed to create bbox label. Please try again.");
+    }
+  };
+
+  const handleDeleteAllLabelsGlobal = () => {
+    setLabels((prevLabels) => {
+      prevLabels.forEach((label) => {
+        label.pin.destroy();
+        if (label.bboxEntity) {
+          viewer.entities.remove(label.bboxEntity);
+        }
+      });
+      return [];
+    });
+  };
+
+  const handleExportAllLabels = () => {
+    if (labels.length === 0) {
+      alert("No labels to export.");
+      return;
+    }
+
+    const baseId = 1001;
+    const elements = labels.map((label, index) =>
+      labelToExportNode(label, baseId + index),
+    );
+
+    const dataStr = JSON.stringify({ elements }, null, 2);
+    const dataBlob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement("a");
+    link.href = url;
+
+    const timestamp = new Date().toISOString().slice(0, 10);
+    link.download = `all-labels-${timestamp}.json`;
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const getLabelsForMap = (mapUrl: string) => {
     return labels.filter((label) => label.mapUrl === mapUrl);
   };
@@ -158,8 +276,11 @@ export function useLabels({ labels, setLabels, viewer }: UseLabelsProps) {
     handleLabelPositionChange,
     handleDeleteLabel,
     handleDeleteAllLabels,
+    handleDeleteAllLabelsGlobal,
     handleExportLabels,
+    handleExportAllLabels,
     handleAddLabelFromCamera,
+    handleAddLabelFromBbox,
     getLabelsForMap,
   };
 }

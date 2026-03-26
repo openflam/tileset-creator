@@ -5,39 +5,26 @@ import MapInfoAuth from "./MapInfoAuth";
 import MapInfoDefault from "./MapInfoDefault";
 import MapInfoCustom from "./MapInfoCustom";
 import CONFIG from "../config";
-import { type CameraViewData } from "../utils/cesium/camera-utils";
-import { type LabelInfo } from "./labels/LabelCard";
 
 type Props = {
   mapTilesLoaded: MapTilesLoaded;
   viewer: Viewer;
   setEditingMap: React.Dispatch<React.SetStateAction<MapInfo | null>>;
-  labels?: LabelInfo[];
-  editEnabled?: boolean;
-  onAddLabel?: (cameraData: CameraViewData, labelName: string, mapUrl: string) => void;
-  onDeleteLabel?: (labelId: string) => void;
-  onLabelPositionChange?: (labelId: string, position: { longitude: number; latitude: number; height: number }) => void;
-  onDeleteAllLabels?: (mapUrl: string) => void;
-  onSubmitLabels?: (mapUrl: string, labels: LabelInfo[]) => void;
   googleOpacity?: number;
   onGoogleOpacityChange?: (opacity: number) => void;
+  mapOpacities?: Record<string, number>;
+  onMapOpacityChange?: (url: string, opacity: number) => void;
 };
 
 function SidebarMapList({
   mapTilesLoaded,
   viewer,
   setEditingMap,
-  labels = [],
-  editEnabled = false,
-  onAddLabel,
-  onDeleteLabel,
-  onLabelPositionChange,
-  onDeleteAllLabels,
-  onSubmitLabels,
   googleOpacity,
   onGoogleOpacityChange,
+  mapOpacities,
+  onMapOpacityChange,
 }: Props) {
-  // Local state to trigger re-renders when visibility changes
   const [, setTick] = useState(0);
   const forceUpdate = useCallback(() => setTick((t) => t + 1), []);
 
@@ -96,7 +83,7 @@ function SidebarMapList({
     }
 
     const isGoogle = map.name === "Google" || map.commonName === "Google";
-    const mapUrl = map.url || "";
+    const mapKey: string | undefined = (map as any).urlOrKey || map.url;
 
     if (map.type === "default") {
       return (
@@ -105,17 +92,20 @@ function SidebarMapList({
           mapInfo={map}
           setEditingMap={setEditingMap}
           onVisibilityChange={forceUpdate}
-          mapUrl={mapUrl}
-          viewer={viewer}
-          labels={labels}
-          editEnabled={editEnabled}
-          onAddLabel={onAddLabel}
-          onDeleteLabel={onDeleteLabel}
-          onLabelPositionChange={onLabelPositionChange}
-          onDeleteAllLabels={onDeleteAllLabels}
-          onSubmitLabels={onSubmitLabels}
-          externalOpacity={isGoogle ? googleOpacity : undefined}
-          onOpacityChange={isGoogle ? onGoogleOpacityChange : undefined}
+          externalOpacity={
+            isGoogle
+              ? googleOpacity
+              : mapKey && mapOpacities?.[mapKey] !== undefined
+                ? mapOpacities[mapKey]
+                : undefined
+          }
+          onOpacityChange={
+            isGoogle
+              ? onGoogleOpacityChange
+              : mapKey
+                ? (opacity: number) => onMapOpacityChange?.(mapKey, opacity)
+                : undefined
+          }
         />
       );
     }

@@ -112,7 +112,7 @@ const CompactLabelCard: React.FC<CompactLabelCardProps> = ({
             style={{ cursor: "pointer" }}
             onClick={() => setIsExpanded(!isExpanded)}
           >
-            <span className="me-2">🏷️</span>
+            <span className="me-2">{label.bbox ? "📦" : "🏷️"}</span>
             <span className="text-truncate" style={{ maxWidth: "150px" }}>
               {label.name}
             </span>
@@ -138,121 +138,159 @@ const CompactLabelCard: React.FC<CompactLabelCardProps> = ({
 
         <Collapse in={isExpanded}>
           <div className="mt-2 pt-2 border-top">
-            {/* Longitude */}
-            <InputGroup size="sm" className="mb-2">
-              <InputGroup.Text style={{ minWidth: "50px" }}>
-                Lon
-              </InputGroup.Text>
-              <Form.Control
-                type="number"
-                step="0.0001"
-                value={position.longitude}
-                onChange={(e) =>
-                  handlePositionUpdate(
-                    "longitude",
-                    parseFloat(e.target.value) || 0,
-                  )
-                }
-                style={{ fontSize: "0.85rem" }}
-              />
-              <Button
-                variant="outline-secondary"
-                size="sm"
-                onClick={() => handleIncrement("longitude")}
-                style={{ padding: "0.25rem 0.5rem" }}
-              >
-                <ChevronUp size={12} />
-              </Button>
-              <Button
-                variant="outline-secondary"
-                size="sm"
-                onClick={() => handleDecrement("longitude")}
-                style={{ padding: "0.25rem 0.5rem" }}
-              >
-                <ChevronDown size={12} />
-              </Button>
-            </InputGroup>
+            {label.bbox ? (
+              <>
+                <div
+                  className="text-muted mb-2"
+                  style={{ fontSize: "0.75rem", fontFamily: "monospace" }}
+                >
+                  <div>
+                    {(
+                      (label.bbox.east - label.bbox.west) *
+                      111000 *
+                      Math.cos(
+                        (label.position.latitude * Math.PI) / 180,
+                      )
+                    ).toFixed(1)}
+                    m x{" "}
+                    {(
+                      (label.bbox.north - label.bbox.south) *
+                      111000
+                    ).toFixed(1)}
+                    m x{" "}
+                    {(
+                      label.bbox.extrudedHeight - label.bbox.height
+                    ).toFixed(1)}
+                    m
+                  </div>
+                  <div>Alt: {label.bbox.height.toFixed(1)}m</div>
+                </div>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleFlyTo}
+                  disabled={!viewer}
+                  className="w-100"
+                >
+                  Fly To
+                </Button>
+              </>
+            ) : (
+              <>
+                <InputGroup size="sm" className="mb-2">
+                  <InputGroup.Text style={{ minWidth: "50px" }}>
+                    Lon
+                  </InputGroup.Text>
+                  <Form.Control
+                    type="number"
+                    step="0.0001"
+                    value={position.longitude}
+                    onChange={(e) =>
+                      handlePositionUpdate(
+                        "longitude",
+                        parseFloat(e.target.value) || 0,
+                      )
+                    }
+                    style={{ fontSize: "0.85rem" }}
+                  />
+                  <Button
+                    variant="outline-secondary"
+                    size="sm"
+                    onClick={() => handleIncrement("longitude")}
+                    style={{ padding: "0.25rem 0.5rem" }}
+                  >
+                    <ChevronUp size={12} />
+                  </Button>
+                  <Button
+                    variant="outline-secondary"
+                    size="sm"
+                    onClick={() => handleDecrement("longitude")}
+                    style={{ padding: "0.25rem 0.5rem" }}
+                  >
+                    <ChevronDown size={12} />
+                  </Button>
+                </InputGroup>
 
-            {/* Latitude */}
-            <InputGroup size="sm" className="mb-2">
-              <InputGroup.Text style={{ minWidth: "50px" }}>
-                Lat
-              </InputGroup.Text>
-              <Form.Control
-                type="number"
-                step="0.0001"
-                value={position.latitude}
-                onChange={(e) =>
-                  handlePositionUpdate(
-                    "latitude",
-                    parseFloat(e.target.value) || 0,
-                  )
-                }
-                style={{ fontSize: "0.85rem" }}
-              />
-              <Button
-                variant="outline-secondary"
-                size="sm"
-                onClick={() => handleIncrement("latitude")}
-                style={{ padding: "0.25rem 0.5rem" }}
-              >
-                <ChevronUp size={12} />
-              </Button>
-              <Button
-                variant="outline-secondary"
-                size="sm"
-                onClick={() => handleDecrement("latitude")}
-                style={{ padding: "0.25rem 0.5rem" }}
-              >
-                <ChevronDown size={12} />
-              </Button>
-            </InputGroup>
+                <InputGroup size="sm" className="mb-2">
+                  <InputGroup.Text style={{ minWidth: "50px" }}>
+                    Lat
+                  </InputGroup.Text>
+                  <Form.Control
+                    type="number"
+                    step="0.0001"
+                    value={position.latitude}
+                    onChange={(e) =>
+                      handlePositionUpdate(
+                        "latitude",
+                        parseFloat(e.target.value) || 0,
+                      )
+                    }
+                    style={{ fontSize: "0.85rem" }}
+                  />
+                  <Button
+                    variant="outline-secondary"
+                    size="sm"
+                    onClick={() => handleIncrement("latitude")}
+                    style={{ padding: "0.25rem 0.5rem" }}
+                  >
+                    <ChevronUp size={12} />
+                  </Button>
+                  <Button
+                    variant="outline-secondary"
+                    size="sm"
+                    onClick={() => handleDecrement("latitude")}
+                    style={{ padding: "0.25rem 0.5rem" }}
+                  >
+                    <ChevronDown size={12} />
+                  </Button>
+                </InputGroup>
 
-            {/* Height */}
-            <InputGroup size="sm" className="mb-2">
-              <InputGroup.Text style={{ minWidth: "50px" }}>
-                Height
-              </InputGroup.Text>
-              <Form.Control
-                type="number"
-                step="1"
-                value={position.height}
-                onChange={(e) =>
-                  handlePositionUpdate(
-                    "height",
-                    parseFloat(e.target.value) || 0,
-                  )
-                }
-                style={{ fontSize: "0.85rem" }}
-              />
-              <InputGroup.Text>m</InputGroup.Text>
-              <Button
-                variant="outline-secondary"
-                size="sm"
-                onClick={() => handleIncrement("height")}
-                style={{ padding: "0.25rem 0.5rem" }}
-              >
-                <ChevronUp size={12} />
-              </Button>
-              <Button
-                variant="outline-secondary"
-                size="sm"
-                onClick={() => handleDecrement("height")}
-                style={{ padding: "0.25rem 0.5rem" }}
-              >
-                <ChevronDown size={12} />
-              </Button>
-            </InputGroup>
+                <InputGroup size="sm" className="mb-2">
+                  <InputGroup.Text style={{ minWidth: "50px" }}>
+                    Height
+                  </InputGroup.Text>
+                  <Form.Control
+                    type="number"
+                    step="1"
+                    value={position.height}
+                    onChange={(e) =>
+                      handlePositionUpdate(
+                        "height",
+                        parseFloat(e.target.value) || 0,
+                      )
+                    }
+                    style={{ fontSize: "0.85rem" }}
+                  />
+                  <InputGroup.Text>m</InputGroup.Text>
+                  <Button
+                    variant="outline-secondary"
+                    size="sm"
+                    onClick={() => handleIncrement("height")}
+                    style={{ padding: "0.25rem 0.5rem" }}
+                  >
+                    <ChevronUp size={12} />
+                  </Button>
+                  <Button
+                    variant="outline-secondary"
+                    size="sm"
+                    onClick={() => handleDecrement("height")}
+                    style={{ padding: "0.25rem 0.5rem" }}
+                  >
+                    <ChevronDown size={12} />
+                  </Button>
+                </InputGroup>
 
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={handleFlyTo}
-              disabled={!viewer}
-              className="w-100 mt-2"
-            >
-              🚀 Fly To
-            </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleFlyTo}
+                  disabled={!viewer}
+                  className="w-100 mt-2"
+                >
+                  Fly To
+                </Button>
+              </>
+            )}
           </div>
         </Collapse>
       </Card.Body>

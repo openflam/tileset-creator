@@ -1,14 +1,6 @@
-import { Cesium3DTileset, Cesium3DTileStyle, Viewer } from "cesium";
-import { Card, Form, Row, Col, Image, Button, Collapse } from "react-bootstrap";
+import { Cesium3DTileset, Cesium3DTileStyle } from "cesium";
+import { Card, Form, Row, Col, Image, Button } from "react-bootstrap";
 import { useState, useEffect } from "react";
-import {
-  parseCameraViewData,
-  getCurrentCameraView,
-  formatCameraViewData,
-  type CameraViewData,
-} from "../utils/cesium/camera-utils";
-import CompactLabelCard from "./labels/CompactLabelCard";
-import { type LabelInfo } from "./labels/LabelCard";
 import CONFIG from "../config";
 
 const changeTilesetOpacity = (tileset: Cesium3DTileset, opacity: number) => {
@@ -34,22 +26,6 @@ interface PropsType {
   onVisibilityChange?: () => void;
   externalOpacity?: number;
   onOpacityChange?: (opacity: number) => void;
-  onAddLabel?: (
-    cameraData: CameraViewData,
-    labelName: string,
-    mapUrl: string,
-  ) => void;
-  viewer?: Viewer;
-  labels?: LabelInfo[];
-  mapUrl: string;
-  onDeleteLabel?: (labelId: string) => void;
-  onLabelPositionChange?: (
-    labelId: string,
-    position: { longitude: number; latitude: number; height: number },
-  ) => void;
-  onDeleteAllLabels?: (mapUrl: string) => void;
-  onSubmitLabels?: (mapUrl: string, labels: LabelInfo[]) => void;
-  editEnabled?: boolean;
 }
 
 function MapInfoDefault({
@@ -58,20 +34,8 @@ function MapInfoDefault({
   onVisibilityChange,
   externalOpacity,
   onOpacityChange,
-  onAddLabel,
-  viewer,
-  labels = [],
-  mapUrl,
-  onDeleteLabel,
-  onLabelPositionChange,
-  onDeleteAllLabels,
-  onSubmitLabels,
-  editEnabled = false,
 }: PropsType) {
   const [opacity, setOpacity] = useState(1);
-  const [showAddLabel, setShowAddLabel] = useState(false);
-  const [labelName, setLabelName] = useState("");
-  const [cameraJsonInput, setCameraJsonInput] = useState("");
 
   useEffect(() => {
     if (externalOpacity !== undefined && externalOpacity !== opacity) {
@@ -79,43 +43,6 @@ function MapInfoDefault({
       changeTilesetOpacity(mapInfo.tile as Cesium3DTileset, externalOpacity);
     }
   }, [externalOpacity]);
-
-  const handleAddLabel = () => {
-    if (!onAddLabel || !labelName.trim() || !cameraJsonInput.trim()) {
-      alert("Please fill in both the label name and camera JSON data.");
-      return;
-    }
-    try {
-      const cameraData = parseCameraViewData(cameraJsonInput.trim());
-      onAddLabel(cameraData, labelName.trim(), mapUrl);
-      setLabelName("");
-      setCameraJsonInput("");
-      setShowAddLabel(false);
-    } catch (error) {
-      alert("Invalid camera JSON data. Please check the format and try again.");
-    }
-  };
-
-  const handleGetCurrentCamera = () => {
-    if (!viewer) return;
-    const currentView = getCurrentCameraView(viewer);
-    if (currentView) {
-      setCameraJsonInput(formatCameraViewData(currentView));
-    }
-  };
-
-  const handleDeleteAll = () => {
-    if (onDeleteAllLabels && confirm("Are you sure you want to delete all labels for this map?")) {
-      onDeleteAllLabels(mapUrl);
-    }
-  };
-
-  const handleExport = () => {
-    if (onSubmitLabels) {
-      const mapLabels = labels.filter((label) => label.mapUrl === mapUrl);
-      onSubmitLabels(mapUrl, mapLabels);
-    }
-  };
 
   return (
     <Card className="w-100 mb-3">
@@ -185,127 +112,6 @@ function MapInfoDefault({
               Adjust map transform
             </Button>
           )}
-
-          {editEnabled && onAddLabel && (
-            <div className="mt-3">
-              <Button
-                variant="outline-primary"
-                size="sm"
-                onClick={() => setShowAddLabel(!showAddLabel)}
-                className="w-100"
-              >
-                {showAddLabel ? "Cancel Add Label" : "Add Label"}
-              </Button>
-
-              <Collapse in={showAddLabel}>
-                <div className="mt-3">
-                  <Form.Group className="mb-3">
-                    <Form.Label>Label Name</Form.Label>
-                    <Form.Control
-                      type="text"
-                      placeholder="Enter label name"
-                      value={labelName}
-                      onChange={(e) => setLabelName(e.target.value)}
-                    />
-                  </Form.Group>
-
-                  <Form.Group className="mb-3">
-                    <div className="d-flex justify-content-between align-items-center mb-2">
-                      <Form.Label className="mb-0">Camera View JSON</Form.Label>
-                      <Button
-                        variant="outline-secondary"
-                        size="sm"
-                        onClick={handleGetCurrentCamera}
-                        disabled={!viewer}
-                        title="Get current camera view"
-                      >
-                        Get Current View
-                      </Button>
-                    </div>
-                    <Form.Control
-                      as="textarea"
-                      rows={8}
-                      placeholder="Paste camera JSON data here..."
-                      value={cameraJsonInput}
-                      onChange={(e) => setCameraJsonInput(e.target.value)}
-                      style={{ fontSize: "12px", fontFamily: "monospace" }}
-                    />
-                  </Form.Group>
-
-                  <div className="d-flex gap-2">
-                    <Button
-                      variant="success"
-                      size="sm"
-                      onClick={handleAddLabel}
-                      disabled={!labelName.trim() || !cameraJsonInput.trim()}
-                    >
-                      Create Label
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => {
-                        setShowAddLabel(false);
-                        setLabelName("");
-                        setCameraJsonInput("");
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              </Collapse>
-            </div>
-          )}
-
-          {editEnabled &&
-            (() => {
-              const mapLabels = labels.filter(
-                (label) => label.mapUrl === mapUrl,
-              );
-              return (
-                mapLabels.length > 0 && (
-                  <>
-                    <div className="mt-3">
-                      <h6
-                        className="text-muted mb-2"
-                        style={{ fontSize: "0.85rem" }}
-                      >
-                        Labels ({mapLabels.length})
-                      </h6>
-                      {mapLabels.map((label) => (
-                        <CompactLabelCard
-                          key={label.id}
-                          label={label}
-                          onDelete={onDeleteLabel}
-                          onPositionChange={onLabelPositionChange}
-                          viewer={viewer}
-                        />
-                      ))}
-                    </div>
-
-                    <div className="d-flex gap-2 mt-3">
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        onClick={handleDeleteAll}
-                        className="flex-fill"
-                      >
-                        Delete All
-                      </Button>
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={handleExport}
-                        className="flex-fill"
-                      >
-                        Export
-                      </Button>
-                    </div>
-                  </>
-                )
-              );
-            })()}
         </Form>
       </Card.Body>
     </Card>

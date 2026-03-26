@@ -86,6 +86,7 @@ type propsType = {
   discoverEnabled: boolean;
   googleOpacity: number;
   setGoogleOpacity: React.Dispatch<React.SetStateAction<number>>;
+  setMapOpacities: React.Dispatch<React.SetStateAction<Record<string, number>>>;
 };
 
 function CesiumViewer({
@@ -96,6 +97,7 @@ function CesiumViewer({
   discoverEnabled,
   googleOpacity: _googleOpacity,
   setGoogleOpacity,
+  setMapOpacities,
 }: propsType) {
   const viewerRef = useRef<HTMLDivElement>(null);
   const [viewer, setViewer] = useState<Viewer | null>(null);
@@ -162,6 +164,7 @@ function CesiumViewer({
         mapTilesLoadedRef={mapTilesLoadedRef}
         setMapTilesLoaded={setMapTilesLoaded}
         setGoogleOpacity={setGoogleOpacity}
+        setMapOpacities={setMapOpacities}
       />
     </div>
   );

@@ -5,10 +5,21 @@ import CombinedSearchService from "./CombinedSearchService";
 import type { SearchResult } from "./CombinedSearchService";
 import { flyToSearchResult } from "../../utils/cesium/customDestinationFound";
 import { flyToCameraView } from "../../utils/cesium/camera-utils";
-import { Viewer, Rectangle, Math as CesiumMath } from "cesium";
+import {
+  Viewer,
+  Rectangle,
+  Math as CesiumMath,
+  Cartesian3,
+  Color,
+  PolygonHierarchy,
+  Entity,
+  Cesium3DTileset,
+  Cesium3DTileStyle,
+} from "cesium";
 import "../../styles/CustomSearchBar.css";
 import { discoverAndAddTiles } from "../../utils/discover-add-tiles";
 import { getSearchServersFromMaps } from "../../utils/search-servers";
+import { createLabel, Label } from "../../utils/cesium/label";
 
 interface CustomSearchBarProps {
   viewer: Viewer | null;
@@ -17,6 +28,7 @@ interface CustomSearchBarProps {
   mapTilesLoadedRef: React.RefObject<MapTilesLoaded>;
   setMapTilesLoaded: React.Dispatch<React.SetStateAction<MapTilesLoaded>>;
   setGoogleOpacity: React.Dispatch<React.SetStateAction<number>>;
+  setMapOpacities: React.Dispatch<React.SetStateAction<Record<string, number>>>;
 }
 
 const CustomSearchBar: React.FC<CustomSearchBarProps> = ({
@@ -26,6 +38,7 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({
   mapTilesLoadedRef,
   setMapTilesLoaded,
   setGoogleOpacity,
+  setMapOpacities,
 }) => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -53,11 +66,39 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({
       deduplicateResults: true,
     }),
   );
+  const searchBboxEntitiesRef = useRef<Entity[]>([]);
+  const searchLabelsRef = useRef<Label[]>([]);
+  const highlightedMapKeyRef = useRef<string | null>(null);
 
   // Update search servers whenever discovered maps change
   useEffect(() => {
     const servers = getSearchServersFromMaps(mapTilesLoaded);
     combinedSearchService.current.updateSearchServers(servers);
+  }, [mapTilesLoaded]);
+
+  // Auto-dim newly discovered maps when a highlight is active
+  useEffect(() => {
+    const activeKey = highlightedMapKeyRef.current;
+    if (!activeKey) return;
+
+    const dimOpacity = 0.1;
+    const newOpacities: Record<string, number> = {};
+    let hasNewMaps = false;
+
+    Object.entries(mapTilesLoaded).forEach(([key, info]) => {
+      const isMatch = key === activeKey;
+      const targetOpacity = isMatch ? 1.0 : dimOpacity;
+      newOpacities[key] = targetOpacity;
+
+      if (info.tile) {
+        changeTilesetOpacity(info.tile as Cesium3DTileset, targetOpacity);
+        hasNewMaps = true;
+      }
+    });
+
+    if (hasNewMaps) {
+      setMapOpacities(newOpacities);
+    }
   }, [mapTilesLoaded]);
 
   // Function to generate camera view from search result data
@@ -85,6 +126,14 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({
       height = result.altitude;
     }
 
+    const extratags = result._rawNominatimData?.extratags;
+    let pitch = -89;
+    if (extratags && extratags["bbox:extruded_height"]) {
+      const extrudedHeight =
+        parseFloat(extratags["bbox:extruded_height"]) || height;
+      height = extrudedHeight + 10;
+    }
+
     return {
       type: "CameraView" as const,
       position: {
@@ -94,7 +143,7 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({
       },
       orientation: {
         heading: 0,
-        pitch: -89,
+        pitch: pitch,
         roll: 0,
       },
       boundingBox: {
@@ -105,6 +154,123 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({
       },
       timestamp: new Date().toISOString(),
     };
+  };
+
+  const clearSearchBbox = () => {
+    if (viewer) {
+      searchBboxEntitiesRef.current.forEach((e) =>
+        viewer.entities.remove(e),
+      );
+      searchLabelsRef.current.forEach((l) => l.destroy());
+    }
+    searchBboxEntitiesRef.current = [];
+    searchLabelsRef.current = [];
+  };
+
+  const showSearchResultBbox = (result: SearchResult) => {
+    if (!viewer) return;
+
+    const extratags = result._rawNominatimData?.extratags;
+    if (!extratags || !extratags["bbox:corner1_lat"]) return;
+
+    clearSearchBbox();
+
+    const corners: { longitude: number; latitude: number }[] = [];
+    for (let i = 1; i <= 4; i++) {
+      const lat = parseFloat(extratags[`bbox:corner${i}_lat`]);
+      const lon = parseFloat(extratags[`bbox:corner${i}_lon`]);
+      if (!isNaN(lat) && !isNaN(lon)) {
+        corners.push({ latitude: lat, longitude: lon });
+      }
+    }
+
+    if (corners.length < 3) return;
+
+    const height = parseFloat(extratags["bbox:height"]) || 0;
+    const extrudedHeight =
+      parseFloat(extratags["bbox:extruded_height"]) || height + 3;
+
+    const bboxEntity = viewer.entities.add({
+      polygon: {
+        hierarchy: new PolygonHierarchy(
+          corners.map((c) =>
+            Cartesian3.fromDegrees(c.longitude, c.latitude),
+          ),
+        ),
+        material: Color.CYAN.withAlpha(0.25),
+        height,
+        extrudedHeight,
+        outline: true,
+        outlineColor: Color.CYAN,
+      },
+    });
+    searchBboxEntitiesRef.current.push(bboxEntity);
+
+    const avgLon =
+      corners.reduce((s, c) => s + c.longitude, 0) / corners.length;
+    const avgLat =
+      corners.reduce((s, c) => s + c.latitude, 0) / corners.length;
+    const labelText =
+      result._rawNominatimData?.name ||
+      result.displayName.split(",")[0] ||
+      result.displayName;
+
+    const pin = createLabel({
+      position: Cartesian3.fromDegrees(
+        avgLon,
+        avgLat,
+        (height + extrudedHeight) / 2,
+      ),
+      text: labelText,
+      viewer,
+    });
+    searchLabelsRef.current.push(pin);
+  };
+
+  const changeTilesetOpacity = (
+    tileset: Cesium3DTileset,
+    opacity: number,
+  ) => {
+    if (tileset) {
+      tileset.style = new Cesium3DTileStyle({
+        color: `color("white", ${opacity})`,
+      });
+    }
+  };
+
+  const highlightMapForResult = (result: SearchResult) => {
+    const mapTag = result._rawNominatimData?.extratags?.map;
+    if (!mapTag) return;
+
+    highlightedMapKeyRef.current = mapTag;
+
+    const dimOpacity = 0.1;
+    const newOpacities: Record<string, number> = {};
+
+    Object.entries(mapTilesLoaded).forEach(([url, info]) => {
+      const opacity = url === mapTag ? 1.0 : dimOpacity;
+      newOpacities[url] = opacity;
+      if (info.tile) {
+        changeTilesetOpacity(info.tile as Cesium3DTileset, opacity);
+      }
+    });
+
+    setMapOpacities(newOpacities);
+    setGoogleOpacity(dimOpacity);
+  };
+
+  const restoreAllMapOpacity = () => {
+    highlightedMapKeyRef.current = null;
+
+    const newOpacities: Record<string, number> = {};
+    Object.entries(mapTilesLoaded).forEach(([url, info]) => {
+      newOpacities[url] = 1.0;
+      if (info.tile) {
+        changeTilesetOpacity(info.tile as Cesium3DTileset, 1.0);
+      }
+    });
+    setMapOpacities(newOpacities);
+    setGoogleOpacity(1.0);
   };
 
   // Debounce search
@@ -222,7 +388,8 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({
           flyToCameraView(viewer, cameraView)
             .then(() => {
               setTimeout(() => {
-                setGoogleOpacity(0.1);
+                highlightMapForResult(result);
+                showSearchResultBbox(result);
               }, 100);
             })
             .catch((err) => {
@@ -246,12 +413,13 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({
   };
 
   const handleClear = () => {
-    setGoogleOpacity(1.0);
+    restoreAllMapOpacity();
     setQuery("");
     setResults([]);
     setShowDropdown(false);
     setSearchStats(emptyStats);
     setIsResultSelected(false);
+    clearSearchBbox();
 
     if (inputRef.current) {
       inputRef.current.focus();
