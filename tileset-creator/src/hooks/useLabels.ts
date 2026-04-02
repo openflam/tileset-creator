@@ -1,6 +1,5 @@
 import { Viewer, Cartesian3, Color, PolygonHierarchy } from "cesium";
 import { createLabel } from "../utils/cesium/label";
-import { type CameraViewData } from "../utils/cesium/camera-utils";
 import { type LabelInfo } from "../components/labels/LabelCard";
 import { type BboxResult } from "./useBboxDrawing";
 
@@ -129,50 +128,6 @@ export function useLabels({ labels, setLabels, viewer }: UseLabelsProps) {
     URL.revokeObjectURL(url);
   };
 
-  const handleAddLabelFromCamera = (
-    cameraData: CameraViewData,
-    labelName: string,
-    mapUrl: string,
-  ) => {
-    try {
-      const labelId = `label-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-      const position = {
-        longitude: cameraData.position.longitude,
-        latitude: cameraData.position.latitude,
-        height: cameraData.position.height,
-      };
-
-      const pin = createLabel({
-        position: Cartesian3.fromDegrees(
-          position.longitude,
-          position.latitude,
-          position.height,
-        ),
-        text: labelName,
-        viewer: viewer,
-      });
-
-      const labelInfo: LabelInfo = {
-        id: labelId,
-        name: labelName,
-        position: position,
-        orientation: {
-          heading: cameraData.orientation.heading,
-          pitch: cameraData.orientation.pitch,
-          roll: cameraData.orientation.roll,
-        },
-        pin: pin,
-        mapUrl: mapUrl,
-      };
-
-      handleLabelCreated(labelInfo);
-    } catch (error) {
-      console.error("Failed to create label:", error);
-      alert("Failed to create label. Please try again.");
-    }
-  };
-
   const handleAddLabelFromBbox = (name: string, bbox: BboxResult, mapUrl = "") => {
     try {
       const labelId = `label-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -279,7 +234,6 @@ export function useLabels({ labels, setLabels, viewer }: UseLabelsProps) {
     handleDeleteAllLabelsGlobal,
     handleExportLabels,
     handleExportAllLabels,
-    handleAddLabelFromCamera,
     handleAddLabelFromBbox,
     getLabelsForMap,
   };

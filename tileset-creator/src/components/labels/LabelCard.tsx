@@ -12,11 +12,6 @@ export interface LabelInfo {
     latitude: number;
     height: number;
   };
-  orientation?: {
-    heading: number;
-    pitch: number;
-    roll: number;
-  };
   pin: Label;
   mapUrl?: string;
   bbox?: {

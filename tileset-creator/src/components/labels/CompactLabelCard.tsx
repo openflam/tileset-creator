@@ -65,37 +65,17 @@ const CompactLabelCard: React.FC<CompactLabelCardProps> = ({
         label.position.height,
       );
 
-      // Use stored orientation if available, otherwise use default
-      const orientation = label.orientation
-        ? {
-            heading: CesiumMath.toRadians(label.orientation.heading),
-            pitch: CesiumMath.toRadians(label.orientation.pitch),
-            roll: CesiumMath.toRadians(label.orientation.roll),
-          }
-        : {
-            heading: CesiumMath.toRadians(0),
-            pitch: CesiumMath.toRadians(-45),
-            roll: CesiumMath.toRadians(0),
-          };
+      const orientation = {
+        heading: CesiumMath.toRadians(0),
+        pitch: CesiumMath.toRadians(-45),
+        roll: CesiumMath.toRadians(0),
+      };
 
-      console.log(`🚀 Flying to label: ${label.name}`, {
-        position: {
-          longitude: label.position.longitude,
-          latitude: label.position.latitude,
-          height: label.position.height,
-        },
-        orientation: label.orientation || "default (-45° pitch)",
-        destination: destination,
-      });
-
-      // Fly to the label position with recorded orientation
       viewer.camera.flyTo({
         destination: destination,
         orientation: orientation,
         duration: 2.0,
-        complete: () => {
-          console.log(`✅ Arrived at label: ${label.name}`);
-        },
+        complete: () => {},
       });
     } catch (error) {
       console.error("❌ Error flying to label:", error);
