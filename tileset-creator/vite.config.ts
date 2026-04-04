@@ -12,7 +12,12 @@ export default defineConfig(({ mode }) => {
 
   if (mode === "development") {
     // Always add SSL in development for CORS compatibility
-    if (env.VITE_MAP_MODE !== "map-server" || env.VITE_DEFAULT_MAP_SERVER !== "localhost") {
+    if (
+      env.VITE_MAP_MODE !== "map-server" ||
+      (env.VITE_DEFAULT_MAP_SERVER !== "localhost" &&
+        env.VITE_DEFAULT_MAP_SERVER !== "http://localhost" &&
+        env.VITE_DEFAULT_MAP_SERVER !== "https://localhost")
+    ) {
       plugins.push(
         basicSsl({
           name: "localdev",

@@ -1,6 +1,6 @@
 import { Rectangle, Credit, Resource } from "cesium";
 
-const CREDIT_HTML = `<a href="https://nominatim.openstreetmap.org/" target="_blank">© OpenStreetMap contributors</a>`;
+const CREDIT_HTML = `<a href="https://nominatim.openstreetmap.org/" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors</a>`;
 
 /**
  * Provides geocoding through a Nominatim-compatible API.
@@ -88,7 +88,10 @@ NominatimGeocoderService.prototype.geocode = async function (query: string) {
           serverUrl: this._url,
           source: "nominatim",
         },
-        _rawNominatimData: result._rawNominatimData,
+        _rawNominatimData: result,
+        _needsDetailsLookup: result._needsDetailsLookup ?? false,
+        osm_type: result.osm_type,
+        osm_id: result.osm_id,
       };
     });
 
@@ -111,14 +114,18 @@ NominatimGeocoderService.prototype._enrichResultsWithDetails = async function (
   const enrichedResults = [];
 
   for (const result of results) {
-    if (result._needsDetailsLookup && result.osm_type && result.osm_id) {
+    const rawNominatimData = result._rawNominatimData;
+    const osmType = result.osm_type ?? rawNominatimData?.osm_type;
+    const osmId = result.osm_id ?? rawNominatimData?.osm_id;
+
+    if (result._needsDetailsLookup && osmType && osmId) {
       try {
         const detailsResource = this._resource.getDerivedResource({
           url: this._resource.url.replace("/search", "/details.php"),
           queryParameters: {
             format: "json",
-            osmtype: result.osm_type.charAt(0).toUpperCase(),
-            osmid: result.osm_id,
+            osmtype: osmType.charAt(0).toUpperCase(),
+            osmid: osmId,
             addressdetails: 1,
             extratags: 1,
             namedetails: 1,

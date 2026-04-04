@@ -113,12 +113,26 @@ export class CombinedSearchService {
     timeoutMs: number,
     fallbackValue: T,
   ): Promise<T> {
-    return Promise.race([
-      promise,
-      new Promise<T>((resolve) => {
-        setTimeout(() => resolve(fallbackValue), timeoutMs);
-      }),
-    ]);
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const timeoutPromise = new Promise<T>((resolve) => {
+      timeoutId = setTimeout(() => {
+        resolve(fallbackValue);
+      }, timeoutMs);
+    });
+
+    const guardedPromise = promise.then(
+      (value) => {
+        clearTimeout(timeoutId);
+        return value;
+      },
+      (error) => {
+        clearTimeout(timeoutId);
+        throw error;
+      },
+    );
+
+    return Promise.race([guardedPromise, timeoutPromise]);
   }
 
   private async searchAllNominatimServers(

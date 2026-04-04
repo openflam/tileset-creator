@@ -2,7 +2,7 @@ import { Rectangle, Credit, Resource } from "cesium";
 import CONFIG from "../../config";
 
 const API_URL = "https://maps.googleapis.com/maps/api/geocode/json";
-const CREDIT_HTML = `<a href="https://developers.google.com/maps" target="_blank">© Google Maps</a>`;
+const CREDIT_HTML = `<a href="https://developers.google.com/maps" target="_blank" rel="noopener noreferrer">© Google Maps</a>`;
 
 /**
  * Provides geocoding through Google Maps Geocoding API.

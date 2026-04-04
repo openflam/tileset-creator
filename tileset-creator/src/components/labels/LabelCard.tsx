@@ -80,20 +80,20 @@ const LabelCard: React.FC<LabelCardProps> = ({
   const showSyncNotification = () => {
     // Show browser popup window
     alert(
-      `Label Synced!\n\n"${label.name}" has been synced with the database.`,
+      `Label position updated!\n\n"${label.name}" was updated from the current pin position.`,
     );
 
     // Also log for debugging
-    console.log(`✅ Label "${label.name}" synced with database`);
+    console.log(`✅ Updated label "${label.name}" position from pin`);
   };
 
   const showErrorNotification = () => {
     // Show browser popup window for error
     alert(
-      `❌ Sync Failed!\n\nFailed to sync "${label.name}" with the database.`,
+      `❌ Update Failed!\n\nFailed to update "${label.name}" from the current pin position.`,
     );
 
-    console.error(`❌ Failed to sync label "${label.name}"`);
+    console.error(`❌ Failed to update label "${label.name}" position from pin`);
   };
 
   return (

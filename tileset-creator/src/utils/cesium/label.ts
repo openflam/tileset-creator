@@ -10,6 +10,8 @@ import {
   Transforms,
 } from "cesium";
 
+const LABEL_GLB_URL = new URL("../../assets/label.glb", import.meta.url).href;
+
 export interface LabelOptions {
   position: Cartesian3;
   text: string;
@@ -42,7 +44,7 @@ export class Label {
       position: position,
       orientation: orientation,
       model: {
-        uri: "/src/assets/label.glb",
+        uri: LABEL_GLB_URL,
         minimumPixelSize: 64,
         maximumScale: 20000,
         scale: 1.0,

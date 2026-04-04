@@ -1,4 +1,4 @@
-import { Viewer, Math as CesiumMath, Cartesian3, Rectangle } from "cesium";
+import { Viewer, Math as CesiumMath, Cartesian2, Cartesian3, Rectangle } from "cesium";
 
 export interface CameraViewData {
   type: "CameraView";
@@ -158,19 +158,19 @@ export function getCurrentCameraView(
 
     // Get corners of the screen
     const topLeft = camera.pickEllipsoid(
-      new Cartesian3(0, 0, 0),
+      new Cartesian2(0, 0),
       scene.globe.ellipsoid,
     );
     const topRight = camera.pickEllipsoid(
-      new Cartesian3(width, 0, 0),
+      new Cartesian2(width, 0),
       scene.globe.ellipsoid,
     );
     const bottomLeft = camera.pickEllipsoid(
-      new Cartesian3(0, height, 0),
+      new Cartesian2(0, height),
       scene.globe.ellipsoid,
     );
     const bottomRight = camera.pickEllipsoid(
-      new Cartesian3(width, height, 0),
+      new Cartesian2(width, height),
       scene.globe.ellipsoid,
     );
 

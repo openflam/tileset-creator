@@ -104,7 +104,7 @@ export function flyToSearchResult(result: any, viewer: Viewer): void {
 
   const camera = viewer.camera;
   let finalDestination = result.destination;
-  const altitude = result.altitude || 1000;
+  const altitude = result.altitude ?? 1000;
 
   if (result.destination instanceof Rectangle) {
     const rect = result.destination;
