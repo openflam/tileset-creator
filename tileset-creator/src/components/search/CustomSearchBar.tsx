@@ -622,13 +622,6 @@ const CustomSearchBar: React.FC<CustomSearchBarProps> = ({
                   </div>
                 </div>
               ))}
-
-              {/* Footer with attribution */}
-              <div className="custom-search-footer">
-                <small className="text-muted">
-                  Powered by OpenStreetMap & Google Maps
-                </small>
-              </div>
             </>
           )}
         </div>
