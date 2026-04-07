@@ -9,6 +9,7 @@ import CONFIG from "../config";
 import CesiumViewer from "./CesiumViewer";
 import SideBar from "./SideBar";
 import { AddMapServer } from "../utils/openflame/discover.ts";
+import { type LabelInfo } from "./labels/LabelCard";
 
 function HomePage() {
   // The mapTilesLoaded state is used to keep track of the loaded map tiles.
@@ -17,6 +18,9 @@ function HomePage() {
   const [discoverEnabled, setDiscoverEnabled] = useState(
     CONFIG.MODE !== "map-server",
   );
+  const [googleOpacity, setGoogleOpacity] = useState(1);
+  const [mapOpacities, setMapOpacities] = useState<Record<string, number>>({});
+  const [labels, setLabels] = useState<LabelInfo[]>([]);
 
   const mapsDiscoveryObj = new MapsDiscovery(CONFIG.DISCOVERY_SUFFIX);
 
@@ -39,6 +43,14 @@ function HomePage() {
       viewer={viewer}
       discoverEnabled={discoverEnabled}
       setDiscoverEnabled={setDiscoverEnabled}
+      googleOpacity={googleOpacity}
+      onGoogleOpacityChange={setGoogleOpacity}
+      mapOpacities={mapOpacities}
+      onMapOpacityChange={(url, opacity) =>
+        setMapOpacities((prev) => ({ ...prev, [url]: opacity }))
+      }
+      labels={labels}
+      setLabels={setLabels}
     />
   ) : null;
 
@@ -52,6 +64,9 @@ function HomePage() {
             onViewerReady={(v) => setViewer(v)}
             mapsDiscoveryObj={mapsDiscoveryObj}
             discoverEnabled={discoverEnabled}
+            googleOpacity={googleOpacity}
+            setGoogleOpacity={setGoogleOpacity}
+            setMapOpacities={setMapOpacities}
           />
         </Col>
 

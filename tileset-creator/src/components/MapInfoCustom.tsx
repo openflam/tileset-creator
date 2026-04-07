@@ -17,7 +17,6 @@ interface PropsType {
 function MapInfoCustom({ mapInfo, viewer }: PropsType) {
   const model = mapInfo.tile as Cesium.Model | Cesium.Cesium3DTileset;
 
-  // Initialize state with the model's transform, or camera position if identity/invalid
   const [params, setParams] = useState(() => {
     let initialMatrix = model.modelMatrix.clone();
 
@@ -44,10 +43,7 @@ function MapInfoCustom({ mapInfo, viewer }: PropsType) {
     );
     const cartographic = Cesium.Ellipsoid.WGS84.cartesianToCartographic(pos);
 
-    // If we can't get a valid cartographic position (e.g. matrix is identity/at center of earth),
-    // fall back to placing in front of camera
     if (!cartographic) {
-      // Use camera position utility (same as addUnplacedDefaultMapTiles)
       const { latitude, longitude, altitude } = getPositionInFrontOfCamera(
         viewer,
         10.0,
@@ -64,7 +60,6 @@ function MapInfoCustom({ mapInfo, viewer }: PropsType) {
       };
     }
 
-    // Use utility to extract all parameters including rotation and scale
     return computeParametersFromTransform(
       Cesium.Matrix4.toArray(initialMatrix),
     );
@@ -77,7 +72,6 @@ function MapInfoCustom({ mapInfo, viewer }: PropsType) {
     message: string;
   } | null>(null);
 
-  // Update modelMatrix whenever params change
   useEffect(() => {
     const transformArray =
       computeTransformFromCartographicPositionAndRotationDegrees(
@@ -104,12 +98,11 @@ function MapInfoCustom({ mapInfo, viewer }: PropsType) {
     model.modelMatrix = newMatrix;
   }, [params, model, mapInfo]);
 
-  // Compute the transform matrix array
   const transformArray = useMemo(() => {
     return computeTransformFromCartographicPositionAndRotationDegrees(
       [params.longitude, params.latitude, params.altitude],
       [params.heading, params.pitch, params.roll],
-      1.0, // Scale is 1.0 for the displayed matrix as per original logic/request
+      1.0,
     );
   }, [params]);
 
@@ -124,7 +117,7 @@ function MapInfoCustom({ mapInfo, viewer }: PropsType) {
   };
 
   const renderControl = (label: string, key: keyof typeof params) => {
-    let step = 0.1; // default step
+    let step = 0.1;
 
     if (key === "latitude" || key === "longitude") step = 0.00001;
     else if (key === "altitude") step = 1;
@@ -137,7 +130,6 @@ function MapInfoCustom({ mapInfo, viewer }: PropsType) {
         <Form.Control
           type="number"
           value={params[key]}
-          // onMouseDown={e => handleMouseDown(e, key)}
           onChange={(e) => handleChange(e, key)}
           step={step}
         />
@@ -190,7 +182,6 @@ function MapInfoCustom({ mapInfo, viewer }: PropsType) {
       });
     } finally {
       setSaving(false);
-      // Clear success message after a few seconds
       setTimeout(() => {
         setSaveStatus((prev) => (prev?.type === "success" ? null : prev));
       }, 3000);

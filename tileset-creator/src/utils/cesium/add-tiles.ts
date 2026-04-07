@@ -28,7 +28,7 @@ async function addTilesetFromMapInfo(
     } else {
       tileset = await addCustomMapTiles(viewer, mapInfo);
     }
-    mapInfo.tile = tileset;
+    mapInfo.tile = tileset ?? undefined;
   }
 
   // Update the mapTilesLoaded state
@@ -44,7 +44,13 @@ async function addTilesetFromMapInfo(
 async function addDefaultMapTiles(
   viewer: Viewer,
   mapInfo: MapInfo,
-): Promise<Cesium3DTileset> {
+): Promise<Cesium3DTileset | null> {
+  // Check if viewer is valid and not destroyed
+  if (!viewer || !viewer.scene || viewer.isDestroyed()) {
+    console.warn("Viewer is not available or has been destroyed");
+    return null;
+  }
+
   const { name, url, key, creditImageUrl, credentialsCookiesRequired } =
     mapInfo;
   let credits = undefined;
@@ -83,6 +89,13 @@ async function addDefaultMapTiles(
   } as any);
 
   const tileset = await Cesium3DTileset.fromUrl(resource);
+  
+  // Check again after async operation in case viewer was destroyed
+  if (!viewer || !viewer.scene || viewer.isDestroyed()) {
+    console.warn("Viewer was destroyed during tileset loading");
+    return null;
+  }
+  
   viewer.scene.primitives.add(tileset);
   return tileset;
 }
@@ -90,9 +103,19 @@ async function addDefaultMapTiles(
 async function addUnplacedDefaultMapTiles(
   viewer: Viewer,
   mapInfo: MapInfo,
-): Promise<Cesium3DTileset> {
+): Promise<Cesium3DTileset | null> {
+  // Check if viewer is valid
+  if (!viewer || !viewer.scene || viewer.isDestroyed()) {
+    console.warn("Viewer is not available or has been destroyed");
+    return null;
+  }
+
   // Load the tileset as normal
   const tileset = await addDefaultMapTiles(viewer, mapInfo);
+  
+  if (!tileset) {
+    return null;
+  }
 
   // Place the model 10 meters in front of the camera using utility
   const { position } = getPositionInFrontOfCamera(viewer, 10.0);
@@ -108,7 +131,13 @@ async function addUnplacedDefaultMapTiles(
 async function addCustomMapTiles(
   viewer: Viewer,
   mapInfo: MapInfo,
-): Promise<CesiumModel> {
+): Promise<CesiumModel | null> {
+  // Check if viewer is valid
+  if (!viewer || !viewer.scene || viewer.isDestroyed()) {
+    console.warn("Viewer is not available or has been destroyed");
+    return null;
+  }
+
   const { url } = mapInfo;
 
   // Place the model 10 meters in front of the camera using utility
@@ -121,6 +150,12 @@ async function addCustomMapTiles(
     scale: 1.0,
     scene: viewer.scene,
   });
+
+  // Check again after async operation
+  if (!viewer || !viewer.scene || viewer.isDestroyed()) {
+    console.warn("Viewer was destroyed during model loading");
+    return null;
+  }
 
   viewer.scene.primitives.add(model);
 

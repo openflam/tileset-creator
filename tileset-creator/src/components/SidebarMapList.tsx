@@ -10,19 +10,25 @@ type Props = {
   mapTilesLoaded: MapTilesLoaded;
   viewer: Viewer;
   setEditingMap: React.Dispatch<React.SetStateAction<MapInfo | null>>;
+  googleOpacity?: number;
+  onGoogleOpacityChange?: (opacity: number) => void;
+  mapOpacities?: Record<string, number>;
+  onMapOpacityChange?: (url: string, opacity: number) => void;
 };
 
-function SidebarMapList({ mapTilesLoaded, viewer, setEditingMap }: Props) {
-  // Local state to trigger re-renders when visibility changes
+function SidebarMapList({
+  mapTilesLoaded,
+  viewer,
+  setEditingMap,
+  googleOpacity,
+  onGoogleOpacityChange,
+  mapOpacities,
+  onMapOpacityChange,
+}: Props) {
   const [, setTick] = useState(0);
   const forceUpdate = useCallback(() => setTick((t) => t + 1), []);
 
   const groupedMaps = useMemo(() => {
-    // ... (grouping logic remains same, dependent on mapTilesLoaded)
-    // NOTE: If maps are added/removed, mapTilesLoaded changes, triggering this.
-    // Visibility changes do NOT change mapTilesLoaded reference, so this memo won't re-run.
-    // But renderBuildingContent runs on every render.
-    // IsGrouping dependent on visibility? No.
     const maps = Object.entries(mapTilesLoaded)
       .map(([url, mapInfo]) => ({ ...mapInfo, urlOrKey: url }))
       .filter((map) => {
@@ -56,17 +62,14 @@ function SidebarMapList({ mapTilesLoaded, viewer, setEditingMap }: Props) {
     });
 
     return { buildings, unknownBuildingKey, worldMapKey };
-  }, [mapTilesLoaded]); // Only re-calc grouping if list changes
+  }, [mapTilesLoaded]);
 
   const toggleGroupVisibility = (maps: MapInfo[], visible: boolean) => {
-    // 1. Update Cesium visibility
     maps.forEach((map) => {
       if (map.tile) {
         (map.tile as Cesium3DTileset).show = visible;
       }
     });
-
-    // 2. Trigger local re-render
     forceUpdate();
   };
 
@@ -78,6 +81,10 @@ function SidebarMapList({ mapTilesLoaded, viewer, setEditingMap }: Props) {
     if (!map.authenticated && map.type === "default") {
       return <MapInfoAuth key={map.url} mapInfo={map} />;
     }
+
+    const isGoogle = map.name === "Google" || map.commonName === "Google";
+    const mapKey: string | undefined = (map as any).urlOrKey || map.url;
+
     if (map.type === "default") {
       return (
         <MapInfoDefault
@@ -85,6 +92,20 @@ function SidebarMapList({ mapTilesLoaded, viewer, setEditingMap }: Props) {
           mapInfo={map}
           setEditingMap={setEditingMap}
           onVisibilityChange={forceUpdate}
+          externalOpacity={
+            isGoogle
+              ? googleOpacity
+              : mapKey && mapOpacities?.[mapKey] !== undefined
+                ? mapOpacities[mapKey]
+                : undefined
+          }
+          onOpacityChange={
+            isGoogle
+              ? onGoogleOpacityChange
+              : mapKey
+                ? (opacity: number) => onMapOpacityChange?.(mapKey, opacity)
+                : undefined
+          }
         />
       );
     }
@@ -126,7 +147,6 @@ function SidebarMapList({ mapTilesLoaded, viewer, setEditingMap }: Props) {
           const floorMaps = floors[floor];
           const isUnknown = floor === unknownFloorKey;
 
-          // Smart Flattening
           if (!isUnknown && floorMaps.length === 1) {
             const singleMap = floorMaps[0];
             const displayMap = {

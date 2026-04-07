@@ -1,18 +1,18 @@
 import {
   Viewer,
-  IonGeocodeProviderType,
   Camera,
   Rectangle,
   Color as CesiumColor,
   Ion,
 } from "cesium";
 import { MapsDiscovery } from "@openflam/dnsspatialdiscovery";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   discoverAndAddTiles,
   addDefaultTiles,
 } from "../utils/discover-add-tiles";
+import CustomSearchBar from "./search/CustomSearchBar";
 import CONFIG from "../config";
 
 async function createViewer(
@@ -35,7 +35,13 @@ async function createViewer(
 
   const viewer = new Viewer(viewerDiv, {
     baseLayerPicker: false,
-    geocoder: IonGeocodeProviderType.GOOGLE,
+    geocoder: false, // Disable the default geocoder
+    homeButton: false, // Optionally disable other widgets to clean up the UI
+    sceneModePicker: false,
+    navigationHelpButton: false,
+    animation: false,
+    timeline: false,
+    fullscreenButton: false,
   });
 
   // Remove all the existing imagery layers and data sources.
@@ -78,6 +84,9 @@ type propsType = {
   onViewerReady: (viewer: Viewer) => void;
   mapsDiscoveryObj: MapsDiscovery;
   discoverEnabled: boolean;
+  googleOpacity: number;
+  setGoogleOpacity: React.Dispatch<React.SetStateAction<number>>;
+  setMapOpacities: React.Dispatch<React.SetStateAction<Record<string, number>>>;
 };
 
 function CesiumViewer({
@@ -86,8 +95,12 @@ function CesiumViewer({
   onViewerReady,
   mapsDiscoveryObj,
   discoverEnabled,
+  googleOpacity: _googleOpacity,
+  setGoogleOpacity,
+  setMapOpacities,
 }: propsType) {
   const viewerRef = useRef<HTMLDivElement>(null);
+  const [viewer, setViewer] = useState<Viewer | null>(null);
 
   // Maintain a reference to the mapTilesLoaded state to avoid stale closures.
   // That is, using just mapTilesLoaded in a callback registered in useEffect will cause using the stale value of mapTilesLoaded.
@@ -103,6 +116,9 @@ function CesiumViewer({
   }, [discoverEnabled]);
 
   useEffect(() => {
+    let isCleaningUp = false;
+    let createdViewer: Viewer | null = null;
+
     if (viewerRef.current) {
       if (viewerRef.current.children.length > 0) {
         return; // Viewer is already created.
@@ -113,13 +129,45 @@ function CesiumViewer({
         mapTilesLoadedRef,
         setMapTilesLoaded,
         discoverEnabledRef,
-      ).then((viewer) => {
-        onViewerReady(viewer);
+      ).then((v) => {
+        if (isCleaningUp) {
+          // If unmounted before viewer was ready, destroy immediately
+          try {
+            v.destroy();
+          } catch (_) {}
+          return;
+        }
+        createdViewer = v;
+        setViewer(v);
+        onViewerReady(v);
       });
     }
+
+    return () => {
+      isCleaningUp = true;
+      if (createdViewer) {
+        try {
+          createdViewer.destroy();
+        } catch (_) {}
+        createdViewer = null;
+      }
+    };
   }, []);
 
-  return <div ref={viewerRef} style={{ width: "100%", height: "100vh" }} />;
+  return (
+    <div style={{ position: "relative", width: "100%", height: "100vh" }}>
+      <div ref={viewerRef} style={{ width: "100%", height: "100%" }} />
+      <CustomSearchBar
+        viewer={viewer}
+        mapTilesLoaded={mapTilesLoaded}
+        mapsDiscoveryObj={mapsDiscoveryObj}
+        mapTilesLoadedRef={mapTilesLoadedRef}
+        setMapTilesLoaded={setMapTilesLoaded}
+        setGoogleOpacity={setGoogleOpacity}
+        setMapOpacities={setMapOpacities}
+      />
+    </div>
+  );
 }
 
 export default CesiumViewer;
